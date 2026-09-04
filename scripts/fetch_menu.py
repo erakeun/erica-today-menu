@@ -58,6 +58,7 @@ USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/152.0.0.0 Safari/537.36"
 )
+REQUEST_DELAY_SECONDS = 3
 
 
 def fetch(url: str, attempts: int = 3) -> str:
@@ -190,6 +191,8 @@ def main() -> None:
         menu_date, restaurant = parse_cafeteria(fetch(config["url"]), config)
         dates.add(menu_date)
         restaurants.append(restaurant)
+        # Avoid a burst of requests against the university's public site.
+        time.sleep(REQUEST_DELAY_SECONDS)
 
     if len(dates) != 1:
         raise RuntimeError(f"식당별 메뉴 날짜가 일치하지 않습니다: {sorted(dates)}")
