@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d3f73">
+  <meta name="description" content="한양대학교 ERICA 교내 식당의 오늘 메뉴를 한눈에 확인합니다.">
+  <title>ERICA 오늘의 메뉴</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --navy: #0d3f73;
+      --blue: #1769aa;
+      --blue-soft: #eaf3fb;
+      --ink: #17212b;
+      --muted: #637080;
+      --line: #dce3ea;
+      --surface: #fff;
+      --background: #f4f7fa;
+      --shadow: 0 12px 30px rgba(13, 63, 115, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--background); }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, #eaf3fb 0, #f4f7fa 260px, #f4f7fa 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .top {
+      padding: 42px 0 22px;
+    }
+
+    .brand {
+      margin: 0 0 8px;
+      color: var(--blue);
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .headline-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      line-height: 1.12;
+      letter-spacing: -.045em;
+    }
+
+    .date {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .updated {
+      flex: 0 0 auto;
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: .82rem;
+      text-align: right;
+    }
+
+    .filters-wrap {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      padding: 10px 0 16px;
+      background: rgba(244, 247, 250, .92);
+      backdrop-filter: blur(12px);
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .filters::-webkit-scrollbar { display: none; }
+
+    .filter {
+      min-height: 42px;
+      padding: 0 17px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #465363;
+      background: rgba(255, 255, 255, .9);
+      font: inherit;
+      font-size: .92rem;
+      font-weight: 750;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .filter[aria-pressed="true"] {
+      border-color: var(--navy);
+      color: #fff;
+      background: var(--navy);
+    }
+
+    .filter:focus-visible,
+    .source-link:focus-visible {
+      outline: 3px solid #f4b942;
+      outline-offset: 3px;
+    }
+
+    main { padding-bottom: 52px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .restaurant {
+      overflow: hidden;
+      border: 1px solid rgba(13, 63, 115, .11);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .restaurant-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #edf1f5;
+    }
+
+    .restaurant h2 {
+      margin: 0;
+      font-size: 1.23rem;
+      line-height: 1.3;
+      letter-spacing: -.02em;
+    }
+
+    .meta {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .source-link {
+      flex: 0 0 auto;
+      color: var(--blue);
+      font-size: .8rem;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .source-link:hover { text-decoration: underline; }
+
+    .meal { padding: 18px 20px 20px; }
+
+    .meal + .meal { border-top: 1px solid #edf1f5; }
+
+    .meal-label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      margin: 0 0 11px;
+      padding: 2px 9px;
+      border-radius: 7px;
+      color: var(--navy);
+      background: var(--blue-soft);
+      font-size: .79rem;
+      font-weight: 800;
+    }
+
+    .option + .option {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .menu-photo {
+      overflow: hidden;
+      margin: 0 0 13px;
+      aspect-ratio: 16 / 10;
+      border-radius: 13px;
+      background: #e9eef3;
+    }
+
+    .menu-photo img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .menu-text {
+      margin: 0;
+      font-size: .97rem;
+      line-height: 1.66;
+      white-space: normal;
+    }
+
+    .price {
+      display: block;
+      margin-top: 6px;
+      color: var(--blue);
+      font-size: .9rem;
+      font-weight: 800;
+    }
+
+    .empty {
+      padding: 28px 20px 30px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .food-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .store {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+
+    .store h2 {
+      margin: 0 0 7px;
+      font-size: 1.05rem;
+    }
+
+    .store-hours {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.45;
+    }
+
+    .store-menu {
+      margin: 0;
+      font-size: .9rem;
+      line-height: 1.55;
+    }
+
+    .food-note {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .loading,
+    .error {
+      grid-column: 1 / -1;
+      padding: 42px 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      color: var(--muted);
+      background: #fff;
+      text-align: center;
+    }
+
+    .error strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    footer {
+      padding: 0 0 38px;
+      color: var(--muted);
+      font-size: .78rem;
+      text-align: center;
+    }
+
+    footer p { margin: 0; }
+
+    .version {
+      margin-top: 5px;
+      color: #8793a1;
+      font-size: .7rem;
+      font-weight: 750;
+      letter-spacing: .06em;
+    }
+
+    [hidden] { display: none !important; }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 24px, 620px); }
+      .top { padding-top: 28px; }
+      .headline-row { display: block; }
+      .updated { margin-top: 9px; text-align: left; }
+      .grid, .food-grid { grid-template-columns: 1fr; }
+      .restaurant-head { padding: 18px 17px 14px; }
+      .meal { padding: 16px 17px 18px; }
+      .food-note { align-items: flex-start; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .restaurant, .store { animation: rise .28s ease-out both; }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="top shell">
+    <p class="brand">HANYANG ERICA</p>
+    <div class="headline-row">
+      <div>
+        <h1>오늘의 메뉴</h1>
+        <p class="date" id="menuDate">메뉴 날짜 확인 중</p>
+      </div>
+      <p class="updated" id="updatedAt" aria-live="polite">데이터 불러오는 중</p>
+    </div>
+  </header>
+
+  <div class="filters-wrap">
+    <nav class="filters shell" aria-label="식사 시간 선택">
+      <button class="filter" type="button" data-filter="all" aria-pressed="true">전체</button>
+      <button class="filter" type="button" data-filter="조식" aria-pressed="false">조식</button>
+      <button class="filter" type="button" data-filter="중식" aria-pressed="false">중식</button>
+      <button class="filter" type="button" data-filter="석식" aria-pressed="false">석식</button>
+      <button class="filter" type="button" data-filter="food-court" aria-pressed="false">푸드코트</button>
+    </nav>
+  </div>
+
+  <main class="shell">
+    <section class="grid" id="restaurantGrid" aria-label="교내 식당 메뉴">
+      <p class="loading">오늘 메뉴를 불러오고 있습니다.</p>
+    </section>
+
+    <section id="foodCourt" hidden aria-label="푸드코트 매장">
+      <div class="food-note">
+        <span>푸드코트는 고정 운영 매장과 대표 메뉴를 표시합니다.</span>
+        <a class="source-link" id="foodCourtSource" target="_blank" rel="noopener">공식 안내 ↗</a>
+      </div>
+      <div class="food-grid" id="foodCourtGrid"></div>
+    </section>
+  </main>
+
+  <footer class="shell">
+    <p>메뉴와 운영시간은 현장 사정에 따라 달라질 수 있습니다. 최종 정보는 각 식당에서 확인해 주세요.</p>
+    <p class="version">V1.1.0 · CONDITIONAL PHOTO</p>
+  </footer>
+
+  <script>
+    const FILTERS = ['all', '조식', '중식', '석식', 'food-court'];
+    const state = { data: null, filter: 'all' };
+
+    const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
+
+    function formatDate(value) {
+      const [year, month, day] = value.split('-').map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      return new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+      }).format(date);
+    }
+
+    function formatUpdated(value) {
+      return new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(new Date(value)) + ' 갱신';
+    }
+
+    function mealMarkup(meal, restaurantName) {
+      const options = meal.items.map(item => `
+        <div class="option">
+          ${item.image ? `
+            <figure class="menu-photo">
+              <img src="${escapeHtml(item.image)}"
+                alt="${escapeHtml(`${restaurantName} ${meal.type} 메뉴 사진`)}"
+                loading="lazy" decoding="async" fetchpriority="low"
+                referrerpolicy="no-referrer" data-menu-image>
+            </figure>` : ''}
+          <p class="menu-text">${escapeHtml(item.menu)}</p>
+          ${item.price ? `<span class="price">${escapeHtml(item.price)}</span>` : ''}
+        </div>`).join('');
+      return `<section class="meal"><h3 class="meal-label">${escapeHtml(meal.type)}</h3>${options}</section>`;
+    }
+
+    function restaurantMarkup(restaurant) {
+      const meals = state.filter === 'all'
+        ? restaurant.meals
+        : restaurant.meals.filter(meal => meal.type === state.filter);
+
+      return `
+        <article class="restaurant">
+          <header class="restaurant-head">
+            <div>
+              <h2>${escapeHtml(restaurant.name)}</h2>
+              <p class="meta">${escapeHtml(restaurant.location)}<br>${escapeHtml(restaurant.hours)}</p>
+            </div>
+            <a class="source-link" href="${escapeHtml(restaurant.source)}" target="_blank" rel="noopener">원문 ↗</a>
+          </header>
+          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : '<p class="empty">해당 시간에 등록된 메뉴가 없습니다.</p>'}
+        </article>`;
+    }
+
+    function renderRestaurants() {
+      const grid = document.querySelector('#restaurantGrid');
+      grid.innerHTML = state.data.restaurants.map(restaurantMarkup).join('');
+      grid.querySelectorAll('[data-menu-image]').forEach(image => {
+        image.addEventListener('error', () => image.closest('.menu-photo')?.remove(), { once: true });
+      });
+    }
+
+    function renderFoodCourt() {
+      const foodCourt = state.data.food_court;
+      document.querySelector('#foodCourtSource').href = foodCourt.source;
+      document.querySelector('#foodCourtGrid').innerHTML = foodCourt.stores.map(store => `
+        <article class="store">
+          <h2>${escapeHtml(store.name)}</h2>
+          <p class="store-hours">${escapeHtml(store.hours)}</p>
+          <p class="store-menu">${escapeHtml(store.menu)}</p>
+        </article>`).join('');
+    }
+
+    function render() {
+      if (!state.data) return;
+      const showFoodCourt = state.filter === 'food-court';
+      document.querySelector('#restaurantGrid').hidden = showFoodCourt;
+      document.querySelector('#foodCourt').hidden = !showFoodCourt;
+      if (showFoodCourt) renderFoodCourt();
+      else renderRestaurants();
+    }
+
+    document.querySelectorAll('.filter').forEach(button => {
+      button.addEventListener('click', () => {
+        const nextFilter = button.dataset.filter;
+        if (!FILTERS.includes(nextFilter)) return;
+        state.filter = nextFilter;
+        document.querySelectorAll('.filter').forEach(item => {
+          item.setAttribute('aria-pressed', String(item === button));
+        });
+        render();
+      });
+    });
+
+    fetch(`./menu.json?v=${Date.now()}`, { cache: 'no-store' })
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        state.data = data;
+        document.querySelector('#menuDate').textContent = formatDate(data.date);
+        document.querySelector('#updatedAt').textContent = formatUpdated(data.generated_at);
+        render();
+      })
+      .catch(() => {
+        document.querySelector('#updatedAt').textContent = '메뉴를 불러오지 못함';
+        document.querySelector('#restaurantGrid').innerHTML = `
+          <p class="error"><strong>잠시 메뉴를 불러오지 못했습니다.</strong>각 식당의 원문 링크에서 확인해 주세요.</p>`;
+      });
+  </script>
+</body>
+</html>

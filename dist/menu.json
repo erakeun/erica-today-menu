@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "campus": "ERICA",
+  "date": "2026-09-04",
+  "generated_at": "2026-09-04T13:25:35+09:00",
+  "restaurants": [
+    {
+      "id": "student",
+      "name": "학생식당",
+      "location": "복지관 2층",
+      "hours": "조식 08:30–09:40 · 중식 11:30–13:30",
+      "source": "https://www.hanyang.ac.kr/re12",
+      "meals": [
+        {
+          "type": "조식",
+          "items": [
+            {
+              "menu": "[천원의아침밥] \"돼지고기고추장찌개 (Gochujang Stew with Pork)\" 쌀밥 메추리알장조림 도시락김 실곤약채소무침 배추김치",
+              "price": "1,000원",
+              "image": "https://www.hanyang.ac.kr/documents/portlet_file_entry/20122/04+%EC%B2%9C%EC%9B%90+%EB%8F%BC%EC%A7%80%EA%B3%A0%EA%B8%B0%EA%B3%A0%EC%B6%94%EC%9E%A5%EC%B0%8C%EA%B0%9C.jpg/f2291ba7-f887-9d32-27ac-e2fbe3cb1c18?status=0&download=true"
+            }
+          ]
+        },
+        {
+          "type": "중식",
+          "items": [
+            {
+              "menu": "\"해물야끼우동 (Seafood Yaki Udon)\" 꼬들단무지 배추김치 일식장국",
+              "price": "4,500원"
+            },
+            {
+              "menu": "\"가츠동 (Katsudon)\" 타코야끼 꼬들단무지 배추김치 일식장국",
+              "price": "6,500원"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dormitory",
+      "name": "창의인재원식당",
+      "location": "창의관 1층",
+      "hours": "조식 07:40–09:00 · 중식 11:30–13:20 · 석식 17:10–18:40",
+      "source": "https://www.hanyang.ac.kr/re13",
+      "meals": [
+        {
+          "type": "조식",
+          "items": [
+            {
+              "menu": "[천원의아침밥] \"브런치정식 Brunch Set\" 후랑크 삶은계란*소금 컵과일 우리쌀프레이크시리얼*저지방우유",
+              "price": "1,000원",
+              "image": "https://www.hanyang.ac.kr/documents/portlet_file_entry/20122/20260904_073811.jpg/d3b9be01-6022-80ba-0293-f66ff8658833?status=0&download=true"
+            }
+          ]
+        },
+        {
+          "type": "중식",
+          "items": [
+            {
+              "menu": "\"특식 에리카돈까스 Erika Pork Cutlet set\" 후리가케밥 감자크림스프 사과콘샐러드 깍두기 과채데이엘로우",
+              "price": "6,000원",
+              "image": "https://www.hanyang.ac.kr/documents/portlet_file_entry/20122/04+%EB%8F%88%EA%B0%80%EC%8A%A4.jpg/11b6079f-0d10-f766-1015-863c83e7e2df?status=0&download=true"
+            }
+          ]
+        },
+        {
+          "type": "석식",
+          "items": [
+            {
+              "menu": "\"스팸김치마요덮밥 Spam Kimchi Mayo Rice Bowl\" 계란부추국 들깨새송이버섯볶음 오이피클무침 요구르트",
+              "price": "4,500원"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "incubator",
+      "name": "창업보육센터",
+      "location": "창업보육센터 지하 1층",
+      "hours": "중식 11:30–13:30 · 석식 17:00–18:30",
+      "source": "https://www.hanyang.ac.kr/re15",
+      "meals": [
+        {
+          "type": "중식",
+          "items": [
+            {
+              "menu": "뚝)가마솥황태설렁탕*소면 Hwangtae Seolleongtang with Somyun 완자칠리조림 콩나물김가루무침 매운고추지 잡곡밥 깍두기 *양배추샐러드+드레싱",
+              "price": "6,500원",
+              "image": "https://www.hanyang.ac.kr/documents/portlet_file_entry/20122/04+%EA%B0%80%EB%A7%88%EC%86%A5%ED%99%A9%ED%83%9C%EC%84%A4%EB%A0%81%ED%83%95.jpg/3df865b1-520d-e85a-5f43-cc0241162ee3?status=0&download=true"
+            }
+          ]
+        },
+        {
+          "type": "석식",
+          "items": [
+            {
+              "menu": "간장불고기*굵은당면 Soy Sauce Bulgogi 김말이칠리강정 중국식오이탕탕이 백미밥 시래기국 배추김치 양배추샐러드+드레싱",
+              "price": "6,500원"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faculty",
+      "name": "교직원식당",
+      "location": "복지관 3층",
+      "hours": "중식 11:30–13:30",
+      "source": "https://www.hanyang.ac.kr/re11",
+      "meals": [
+        {
+          "type": "중식",
+          "items": [
+            {
+              "menu": "잔치국수&청양양념간장 Banquet Noodles & Spicy Soy Sauce 비엔나미트볼볶음 교자만두튀김 얼갈이겉절이 추가쌀밥 요구르트 그린샐러드",
+              "price": "6,500원",
+              "image": "https://www.hanyang.ac.kr/documents/portlet_file_entry/20122/04+%EC%9E%94%EC%B9%98%EA%B5%AD%EC%88%98.jpg/9435a73e-dd93-b8b1-c4a0-d7b4de45a24e?status=0&download=true"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "food_court": {
+    "name": "푸드코트",
+    "note": "고정 운영 매장과 대표 메뉴",
+    "source": "https://www.hanyang.ac.kr/re14",
+    "stores": [
+      {
+        "name": "Pan&Wok",
+        "hours": "월~금 : 10:00~19:00",
+        "menu": "짜장면, 짬뽕, 탕수육, 파스타, 리조또, 스테이크, 피자"
+      },
+      {
+        "name": "33떡볶이",
+        "hours": "월~금 : 10:00~19:30",
+        "menu": "떡볶이, 순대, 김밥, 튀김, 쫄면"
+      },
+      {
+        "name": "프레시부리또",
+        "hours": "월~금 : 08:00~19:30",
+        "menu": "부리또, 부리또 보울, 타코, 퀘사디아"
+      },
+      {
+        "name": "바비든든",
+        "hours": "월~금 : 10:00~19:30",
+        "menu": "컵밥(소금 및 양념, 참치마요, 샐러드파스타)"
+      },
+      {
+        "name": "산쪼메라멘",
+        "hours": "월~금 : 10:00~19:00",
+        "menu": "돈코츠라멘, 산쪼메라멘, 규동, 가츠동"
+      },
+      {
+        "name": "뉴욕버거",
+        "hours": "월~금 : 10:00~19:30",
+        "menu": "뉴욕버거, 뉴욕클래식하프치킨, 갈릭프라이즈"
+      },
+      {
+        "name": "블루포트",
+        "hours": "월~금 : 08:00~19:30 토+공휴일 : 12:00~17:00 일요일 휴무",
+        "menu": "커피, 라떼, 스무디, 에이드, 버블티, 밀크티"
+      }
+    ]
+  }
+}
