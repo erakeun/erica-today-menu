@@ -94,8 +94,28 @@
       backdrop-filter: blur(12px);
     }
 
+    .filter-panel {
+      display: grid;
+      gap: 8px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .filter-label {
+      flex: 0 0 38px;
+      color: var(--muted);
+      font-size: .75rem;
+      font-weight: 800;
+    }
+
     .filters {
       display: flex;
+      min-width: 0;
       gap: 8px;
       overflow-x: auto;
       scrollbar-width: none;
@@ -319,6 +339,8 @@
       .top { padding-top: 28px; }
       .headline-row { display: block; }
       .updated { margin-top: 9px; text-align: left; }
+      .filter-group { align-items: flex-start; gap: 7px; }
+      .filter-label { flex-basis: 34px; padding-top: 11px; font-size: .7rem; }
       .grid, .food-grid { grid-template-columns: 1fr; }
       .restaurant-head { padding: 18px 17px 14px; }
       .meal { padding: 16px 17px 18px; }
@@ -347,13 +369,28 @@
   </header>
 
   <div class="filters-wrap">
-    <nav class="filters shell" aria-label="식사 시간 선택">
-      <button class="filter" type="button" data-filter="all" aria-pressed="true">전체</button>
-      <button class="filter" type="button" data-filter="조식" aria-pressed="false">조식</button>
-      <button class="filter" type="button" data-filter="중식" aria-pressed="false">중식</button>
-      <button class="filter" type="button" data-filter="석식" aria-pressed="false">석식</button>
-      <button class="filter" type="button" data-filter="food-court" aria-pressed="false">푸드코트</button>
-    </nav>
+    <div class="filter-panel shell">
+      <div class="filter-group">
+        <span class="filter-label" id="restaurantFilterLabel">식당</span>
+        <nav class="filters" aria-labelledby="restaurantFilterLabel">
+          <button class="filter restaurant-filter" type="button" data-restaurant="all" aria-pressed="true">전체</button>
+          <button class="filter restaurant-filter" type="button" data-restaurant="student" aria-pressed="false">학생식당</button>
+          <button class="filter restaurant-filter" type="button" data-restaurant="dormitory" aria-pressed="false">창의인재원</button>
+          <button class="filter restaurant-filter" type="button" data-restaurant="incubator" aria-pressed="false">창업보육센터</button>
+          <button class="filter restaurant-filter" type="button" data-restaurant="faculty" aria-pressed="false">교직원식당</button>
+          <button class="filter restaurant-filter" type="button" data-restaurant="food-court" aria-pressed="false">푸드코트</button>
+        </nav>
+      </div>
+      <div class="filter-group" id="mealFilterGroup">
+        <span class="filter-label" id="mealFilterLabel">시간</span>
+        <nav class="filters" aria-labelledby="mealFilterLabel">
+          <button class="filter meal-filter" type="button" data-meal="all" aria-pressed="true">전체</button>
+          <button class="filter meal-filter" type="button" data-meal="조식" aria-pressed="false">조식</button>
+          <button class="filter meal-filter" type="button" data-meal="중식" aria-pressed="false">중식</button>
+          <button class="filter meal-filter" type="button" data-meal="석식" aria-pressed="false">석식</button>
+        </nav>
+      </div>
+    </div>
   </div>
 
   <main class="shell">
@@ -372,12 +409,13 @@
 
   <footer class="shell">
     <p>메뉴와 운영시간은 현장 사정에 따라 달라질 수 있습니다. 최종 정보는 각 식당에서 확인해 주세요.</p>
-    <p class="version">V1.1.0 · CONDITIONAL PHOTO</p>
+    <p class="version">V1.2.0 · RESTAURANT FILTERS</p>
   </footer>
 
   <script>
-    const FILTERS = ['all', '조식', '중식', '석식', 'food-court'];
-    const state = { data: null, filter: 'all' };
+    const RESTAURANT_FILTERS = ['all', 'student', 'dormitory', 'incubator', 'faculty', 'food-court'];
+    const MEAL_FILTERS = ['all', '조식', '중식', '석식'];
+    const state = { data: null, restaurant: 'all', meal: 'all' };
 
     const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, char => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -414,9 +452,9 @@
     }
 
     function restaurantMarkup(restaurant) {
-      const meals = state.filter === 'all'
+      const meals = state.meal === 'all'
         ? restaurant.meals
-        : restaurant.meals.filter(meal => meal.type === state.filter);
+        : restaurant.meals.filter(meal => meal.type === state.meal);
 
       return `
         <article class="restaurant">
@@ -433,7 +471,10 @@
 
     function renderRestaurants() {
       const grid = document.querySelector('#restaurantGrid');
-      grid.innerHTML = state.data.restaurants.map(restaurantMarkup).join('');
+      const restaurants = state.restaurant === 'all'
+        ? state.data.restaurants
+        : state.data.restaurants.filter(restaurant => restaurant.id === state.restaurant);
+      grid.innerHTML = restaurants.map(restaurantMarkup).join('');
       grid.querySelectorAll('[data-menu-image]').forEach(image => {
         image.addEventListener('error', () => image.closest('.menu-photo')?.remove(), { once: true });
       });
@@ -452,19 +493,32 @@
 
     function render() {
       if (!state.data) return;
-      const showFoodCourt = state.filter === 'food-court';
+      const showFoodCourt = state.restaurant === 'food-court';
       document.querySelector('#restaurantGrid').hidden = showFoodCourt;
       document.querySelector('#foodCourt').hidden = !showFoodCourt;
+      document.querySelector('#mealFilterGroup').hidden = showFoodCourt;
       if (showFoodCourt) renderFoodCourt();
       else renderRestaurants();
     }
 
-    document.querySelectorAll('.filter').forEach(button => {
+    document.querySelectorAll('.restaurant-filter').forEach(button => {
       button.addEventListener('click', () => {
-        const nextFilter = button.dataset.filter;
-        if (!FILTERS.includes(nextFilter)) return;
-        state.filter = nextFilter;
-        document.querySelectorAll('.filter').forEach(item => {
+        const nextRestaurant = button.dataset.restaurant;
+        if (!RESTAURANT_FILTERS.includes(nextRestaurant)) return;
+        state.restaurant = nextRestaurant;
+        document.querySelectorAll('.restaurant-filter').forEach(item => {
+          item.setAttribute('aria-pressed', String(item === button));
+        });
+        render();
+      });
+    });
+
+    document.querySelectorAll('.meal-filter').forEach(button => {
+      button.addEventListener('click', () => {
+        const nextMeal = button.dataset.meal;
+        if (!MEAL_FILTERS.includes(nextMeal)) return;
+        state.meal = nextMeal;
+        document.querySelectorAll('.meal-filter').forEach(item => {
           item.setAttribute('aria-pressed', String(item === button));
         });
         render();
