@@ -13,6 +13,7 @@ import re
 import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from http.cookiejar import CookieJar
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -59,6 +60,9 @@ USER_AGENT = (
     "Chrome/152.0.0.0 Safari/537.36"
 )
 REQUEST_DELAY_SECONDS = 3
+OPENER = urllib.request.build_opener(
+    urllib.request.HTTPCookieProcessor(CookieJar())
+)
 
 
 def fetch(url: str, attempts: int = 3) -> str:
@@ -73,7 +77,7 @@ def fetch(url: str, attempts: int = 3) -> str:
     last_error: Exception | None = None
     for attempt in range(attempts):
         try:
-            with urllib.request.urlopen(request, timeout=30) as response:
+            with OPENER.open(request, timeout=30) as response:
                 charset = response.headers.get_content_charset() or "utf-8"
                 return response.read().decode(charset, errors="replace")
         except Exception as exc:  # urllib raises several transport error types.
