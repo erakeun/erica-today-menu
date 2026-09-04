@@ -65,7 +65,7 @@ OPENER = urllib.request.build_opener(
 )
 
 
-def fetch(url: str, attempts: int = 3) -> str:
+def fetch(url: str, attempts: int = 5) -> str:
     request = urllib.request.Request(
         url,
         headers={
@@ -77,7 +77,7 @@ def fetch(url: str, attempts: int = 3) -> str:
     last_error: Exception | None = None
     for attempt in range(attempts):
         try:
-            with OPENER.open(request, timeout=30) as response:
+            with OPENER.open(request, timeout=20) as response:
                 charset = response.headers.get_content_charset() or "utf-8"
                 return response.read().decode(charset, errors="replace")
         except Exception as exc:  # urllib raises several transport error types.
