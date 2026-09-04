@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 오늘 메뉴 수집
+        continue-on-error: true
         run: python3 scripts/fetch_menu.py
 
       - name: GitHub Pages 설정
