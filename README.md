@@ -34,6 +34,11 @@
 
 <https://erakeun.github.io/erica-today-menu/>
 
+식당을 바로 선택해 여는 링크도 지원합니다. `restaurant`에는 `student`, `dormitory`,
+`incubator`, `faculty`, `food-court` 중 하나를 사용합니다.
+
+<https://erakeun.github.io/erica-today-menu/?restaurant=student>
+
 ## 수동 갱신
 
 GitHub의 `Actions → ERICA 메뉴 갱신 및 배포 → Run workflow`를 누르면 즉시 다시 수집하고 배포합니다.
