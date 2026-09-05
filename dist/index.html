@@ -409,13 +409,20 @@
 
   <footer class="shell">
     <p>메뉴와 운영시간은 현장 사정에 따라 달라질 수 있습니다. 최종 정보는 각 식당에서 확인해 주세요.</p>
-    <p class="version">V1.2.1 · CLOSED DAY NOTICE</p>
+    <p class="version">V1.3.0 · RESTAURANT DEEP LINKS</p>
   </footer>
 
   <script>
     const RESTAURANT_FILTERS = ['all', 'student', 'dormitory', 'incubator', 'faculty', 'food-court'];
     const MEAL_FILTERS = ['all', '조식', '중식', '석식'];
-    const state = { data: null, restaurant: 'all', meal: 'all' };
+    const query = new URLSearchParams(location.search);
+    const requestedRestaurant = query.get('restaurant');
+    const requestedMeal = query.get('meal');
+    const state = {
+      data: null,
+      restaurant: RESTAURANT_FILTERS.includes(requestedRestaurant) ? requestedRestaurant : 'all',
+      meal: MEAL_FILTERS.includes(requestedMeal) ? requestedMeal : 'all'
+    };
 
     const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, char => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -501,14 +508,32 @@
       else renderRestaurants();
     }
 
+    function syncFilterButtons() {
+      document.querySelectorAll('.restaurant-filter').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.restaurant === state.restaurant));
+      });
+      document.querySelectorAll('.meal-filter').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.meal === state.meal));
+      });
+    }
+
+    function syncUrl() {
+      const next = new URLSearchParams(location.search);
+      if (state.restaurant === 'all') next.delete('restaurant');
+      else next.set('restaurant', state.restaurant);
+      if (state.meal === 'all') next.delete('meal');
+      else next.set('meal', state.meal);
+      const search = next.toString();
+      history.replaceState(null, '', `${location.pathname}${search ? `?${search}` : ''}${location.hash}`);
+    }
+
     document.querySelectorAll('.restaurant-filter').forEach(button => {
       button.addEventListener('click', () => {
         const nextRestaurant = button.dataset.restaurant;
         if (!RESTAURANT_FILTERS.includes(nextRestaurant)) return;
         state.restaurant = nextRestaurant;
-        document.querySelectorAll('.restaurant-filter').forEach(item => {
-          item.setAttribute('aria-pressed', String(item === button));
-        });
+        syncFilterButtons();
+        syncUrl();
         render();
       });
     });
@@ -518,12 +543,13 @@
         const nextMeal = button.dataset.meal;
         if (!MEAL_FILTERS.includes(nextMeal)) return;
         state.meal = nextMeal;
-        document.querySelectorAll('.meal-filter').forEach(item => {
-          item.setAttribute('aria-pressed', String(item === button));
-        });
+        syncFilterButtons();
+        syncUrl();
         render();
       });
     });
+
+    syncFilterButtons();
 
     fetch(`./menu.json?v=${Date.now()}`, { cache: 'no-store' })
       .then(response => {
