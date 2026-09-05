@@ -409,7 +409,7 @@
 
   <footer class="shell">
     <p>메뉴와 운영시간은 현장 사정에 따라 달라질 수 있습니다. 최종 정보는 각 식당에서 확인해 주세요.</p>
-    <p class="version">V1.2.0 · RESTAURANT FILTERS</p>
+    <p class="version">V1.2.1 · CLOSED DAY NOTICE</p>
   </footer>
 
   <script>
@@ -465,7 +465,7 @@
             </div>
             <a class="source-link" href="${escapeHtml(restaurant.source)}" target="_blank" rel="noopener">원문 ↗</a>
           </header>
-          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : '<p class="empty">해당 시간에 등록된 메뉴가 없습니다.</p>'}
+          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : `<p class="empty">${restaurant.closed === true && restaurant.meals.length === 0 ? '주말 및 공휴일에는 운영하지 않습니다.' : '해당 시간에 등록된 메뉴가 없습니다.'}</p>`}
         </article>`;
     }
 

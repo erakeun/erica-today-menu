@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Fetch ERICA cafeteria data and write one static JSON file.
 
-Uses only the Python standard library so the GitHub Action has no package
-installation step and the public page never contacts the Hanyang site itself.
+Holiday classification runs at build time; visitors only read the static JSON.
 """
 
 from __future__ import annotations
@@ -12,7 +11,7 @@ import json
 import re
 import time
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from http.cookiejar import CookieJar
 from pathlib import Path
 from urllib.parse import urljoin
@@ -21,6 +20,9 @@ from urllib.parse import urljoin
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "dist" / "menu.json"
 KST = timezone(timedelta(hours=9))
+HOLIDAY_CALENDAR = json.loads(
+    (ROOT / "scripts" / "kr_public_holidays.json").read_text(encoding="utf-8")
+)
 
 CAFETERIAS = (
     {
@@ -54,6 +56,8 @@ CAFETERIAS = (
 )
 
 FOOD_COURT_URL = "https://www.hanyang.ac.kr/re14"
+# Campus operating policy: the dormitory and food court have separate schedules.
+WEEKDAY_ONLY_RESTAURANTS = {"student", "incubator", "faculty"}
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -92,6 +96,16 @@ def clean_text(fragment: str) -> str:
     fragment = re.sub(r"<[^>]+>", " ", fragment)
     fragment = html_lib.unescape(fragment)
     return re.sub(r"\s+", " ", fragment).strip()
+
+
+def is_closed_day(menu_date: str, restaurant: dict) -> bool:
+    """Never replace an actual menu or infer closure from a meal filter."""
+    if restaurant["id"] not in WEEKDAY_ONLY_RESTAURANTS or restaurant["meals"]:
+        return False
+    day = date.fromisoformat(menu_date)
+    if day.year not in HOLIDAY_CALENDAR["years"]:
+        raise RuntimeError(f"{day.year}년 대한민국 공휴일 자료를 갱신해야 합니다.")
+    return day.weekday() >= 5 or menu_date in HOLIDAY_CALENDAR["dates"]
 
 
 def parse_cafeteria(source: str, config: dict[str, str]) -> tuple[str, dict]:
@@ -155,7 +169,9 @@ def parse_cafeteria(source: str, config: dict[str, str]) -> tuple[str, dict]:
         "source": config["url"],
         "meals": meals,
     }
-    return date_match.group(1).replace("/", "-"), restaurant
+    menu_date = date_match.group(1).replace("/", "-")
+    restaurant["closed"] = is_closed_day(menu_date, restaurant)
+    return menu_date, restaurant
 
 
 def parse_food_court(source: str) -> list[dict]:
