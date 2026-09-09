@@ -472,7 +472,7 @@
             </div>
             <a class="source-link" href="${escapeHtml(restaurant.source)}" target="_blank" rel="noopener">원문 ↗</a>
           </header>
-          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : `<p class="empty">${restaurant.closed === true && restaurant.meals.length === 0 ? '주말 및 공휴일에는 운영하지 않습니다.' : '해당 시간에 등록된 메뉴가 없습니다.'}</p>`}
+          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : `<p class="empty">${restaurant.unavailable === true ? '메뉴 정보 없음' : restaurant.closed === true && restaurant.meals.length === 0 ? '주말 및 공휴일에는 운영하지 않습니다.' : '해당 시간에 등록된 메뉴가 없습니다.'}</p>`}
         </article>`;
     }
 
@@ -490,7 +490,9 @@
     function renderFoodCourt() {
       const foodCourt = state.data.food_court;
       document.querySelector('#foodCourtSource').href = foodCourt.source;
-      document.querySelector('#foodCourtGrid').innerHTML = foodCourt.stores.map(store => `
+      document.querySelector('#foodCourtGrid').innerHTML = foodCourt.unavailable === true
+        ? '<p class="empty">메뉴 정보 없음</p>'
+        : foodCourt.stores.map(store => `
         <article class="store">
           <h2>${escapeHtml(store.name)}</h2>
           <p class="store-hours">${escapeHtml(store.hours)}</p>

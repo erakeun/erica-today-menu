@@ -11,6 +11,7 @@ import json
 import re
 import time
 import urllib.request
+from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from http.cookiejar import CookieJar
 from pathlib import Path
@@ -56,6 +57,13 @@ CAFETERIAS = (
 )
 
 FOOD_COURT_URL = "https://www.hanyang.ac.kr/re14"
+SOURCE_NAMES = {
+    "student": "학생식당",
+    "dormitory": "창의인재원식당",
+    "incubator": "창업보육센터식당",
+    "faculty": "교직원식당",
+}
+MEAL_TYPES = {"breakfast": "조식", "lunch": "중식", "dinner": "석식"}
 # Campus operating policy: the dormitory and food court have separate schedules.
 WEEKDAY_ONLY_RESTAURANTS = {"student", "incubator", "faculty"}
 USER_AGENT = (
@@ -108,7 +116,80 @@ def is_closed_day(menu_date: str, restaurant: dict) -> bool:
     return day.weekday() >= 5 or menu_date in HOLIDAY_CALENDAR["dates"]
 
 
+def restaurant_record(config: dict[str, str], meals: list[dict]) -> dict:
+    return {
+        "id": config["id"],
+        "name": config["name"],
+        "location": config["location"],
+        "hours": config["hours"],
+        "source": config["url"],
+        "meals": meals,
+    }
+
+
+def parse_embedded_menus(source: str, config: dict[str, str]) -> tuple[str, dict] | None:
+    """Parse the consolidated menu JSON used by the current welfare portal."""
+    match = re.search(r"\bconst\s+dbMenus\s*=\s*(\[.*?\])\s*;", source, re.DOTALL)
+    if not match:
+        return None
+
+    try:
+        all_items = json.loads(match.group(1))
+    except (json.JSONDecodeError, TypeError) as exc:
+        raise RuntimeError(f"{config['name']} 페이지의 메뉴 데이터가 올바르지 않습니다.") from exc
+
+    dates = {
+        item.get("target_date")
+        for item in all_items
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("target_date", "")))
+    }
+    if len(dates) != 1:
+        raise RuntimeError(
+            f"{config['name']} 페이지의 메뉴 날짜를 확정하지 못했습니다: {sorted(dates)}"
+        )
+    menu_date = dates.pop()
+
+    grouped: dict[str, list[dict]] = {}
+    source_name = SOURCE_NAMES[config["id"]]
+    for raw_item in all_items:
+        if raw_item.get("facility_name") != source_name:
+            continue
+        meal_type = MEAL_TYPES.get(raw_item.get("meal_type"))
+        menu_name = clean_text(str(raw_item.get("name") or ""))
+        if not meal_type or not menu_name:
+            continue
+
+        description = clean_text(str(raw_item.get("description") or ""))
+        menu = f"{menu_name} · {description}" if description else menu_name
+        raw_price = raw_item.get("price")
+        if isinstance(raw_price, (int, float)):
+            price = f"{raw_price:,.0f}원"
+        else:
+            price = clean_text(str(raw_price or ""))
+        item = {"menu": menu, "price": price}
+
+        raw_image = str(raw_item.get("image_url") or "").strip()
+        if raw_image:
+            image_url = urljoin(config["url"], raw_image)
+            if image_url.startswith(("https://", "http://")):
+                item["image"] = image_url
+        grouped.setdefault(meal_type, []).append(item)
+
+    meals = [
+        {"type": meal_type, "items": grouped[meal_type]}
+        for meal_type in MEAL_TYPES.values()
+        if meal_type in grouped
+    ]
+    restaurant = restaurant_record(config, meals)
+    restaurant["closed"] = is_closed_day(menu_date, restaurant)
+    return menu_date, restaurant
+
+
 def parse_cafeteria(source: str, config: dict[str, str]) -> tuple[str, dict]:
+    embedded = parse_embedded_menus(source, config)
+    if embedded is not None:
+        return embedded
+
     date_match = re.search(
         r'class="hyu-pagination-inner"[^>]*>.*?<h1>\s*(\d{4}/\d{2}/\d{2})\s*</h1>',
         source,
@@ -161,14 +242,7 @@ def parse_cafeteria(source: str, config: dict[str, str]) -> tuple[str, dict]:
         if items:
             meals.append({"type": meal_type, "items": items})
 
-    restaurant = {
-        "id": config["id"],
-        "name": config["name"],
-        "location": config["location"],
-        "hours": config["hours"],
-        "source": config["url"],
-        "meals": meals,
-    }
+    restaurant = restaurant_record(config, meals)
     menu_date = date_match.group(1).replace("/", "-")
     restaurant["closed"] = is_closed_day(menu_date, restaurant)
     return menu_date, restaurant
@@ -203,32 +277,68 @@ def parse_food_court(source: str) -> list[dict]:
     return stores
 
 
+def unavailable_restaurant(config: dict[str, str]) -> dict:
+    restaurant = restaurant_record(config, [])
+    restaurant["closed"] = False
+    restaurant["unavailable"] = True
+    return restaurant
+
+
 def main() -> None:
-    dates: set[str] = set()
+    dates: list[str] = []
     restaurants: list[dict] = []
+    failed_configs: list[dict[str, str]] = []
 
     for config in CAFETERIAS:
-        menu_date, restaurant = parse_cafeteria(fetch(config["url"]), config)
-        dates.add(menu_date)
-        restaurants.append(restaurant)
+        try:
+            menu_date, restaurant = parse_cafeteria(fetch(config["url"]), config)
+        except Exception as exc:
+            print(f"경고: {config['name']} 메뉴를 건너뜁니다: {exc}")
+            failed_configs.append(config)
+        else:
+            dates.append(menu_date)
+            restaurants.append(restaurant)
         # Avoid a burst of requests against the university's public site.
         time.sleep(REQUEST_DELAY_SECONDS)
 
-    if len(dates) != 1:
-        raise RuntimeError(f"식당별 메뉴 날짜가 일치하지 않습니다: {sorted(dates)}")
-
     now = datetime.now(KST)
+    if dates:
+        menu_date = Counter(dates).most_common(1)[0][0]
+        if len(set(dates)) != 1:
+            print(f"경고: 식당별 메뉴 날짜가 일치하지 않습니다: {sorted(set(dates))}")
+    else:
+        menu_date = now.date().isoformat()
+        print(f"경고: 메뉴 날짜를 가져오지 못해 오늘 날짜를 사용합니다: {menu_date}")
+
+    failed_ids = {config["id"] for config in failed_configs}
+    by_id = {restaurant["id"]: restaurant for restaurant in restaurants}
+    restaurants = [
+        unavailable_restaurant(config)
+        if config["id"] in failed_ids
+        else by_id[config["id"]]
+        for config in CAFETERIAS
+    ]
+
+    try:
+        food_court_stores = parse_food_court(fetch(FOOD_COURT_URL))
+        food_court_unavailable = False
+    except Exception as exc:
+        print(f"경고: 푸드코트 정보를 건너뜁니다: {exc}")
+        food_court_stores = []
+        food_court_unavailable = True
+
     payload = {
         "schema_version": 1,
         "campus": "ERICA",
-        "date": dates.pop(),
+        "date": menu_date,
         "generated_at": now.isoformat(timespec="seconds"),
         "restaurants": restaurants,
         "food_court": {
             "name": "푸드코트",
             "note": "고정 운영 매장과 대표 메뉴",
             "source": FOOD_COURT_URL,
-            "stores": parse_food_court(fetch(FOOD_COURT_URL)),
+            "stores": food_court_stores,
+            "unavailable": food_court_unavailable,
         },
     }
 

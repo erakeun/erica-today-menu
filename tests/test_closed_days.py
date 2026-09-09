@@ -1,5 +1,10 @@
+import json
+from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
+from scripts import fetch_menu
 from scripts.fetch_menu import is_closed_day, parse_cafeteria, CAFETERIAS
 
 
@@ -36,6 +41,69 @@ class ClosedDayTests(unittest.TestCase):
     def test_unknown_calendar_year_is_not_silently_a_weekday(self):
         with self.assertRaisesRegex(RuntimeError, "공휴일 자료"):
             is_closed_day("2036-09-01", self.restaurant())
+
+
+class CurrentPortalParserTests(unittest.TestCase):
+    source = '''
+    <script>
+      const dbMenus = [
+        {"meal_type":"breakfast","name":"천원의 아침밥","description":"쌀밥\\r\\n깍두기", "price":1000,
+         "image_url":"/uploads/breakfast.jpg","target_date":"2026-09-10","facility_name":"학생식당"},
+        {"meal_type":"lunch","name":"제육덮밥","description":"배추김치", "price":4500,
+         "image_url":null,"target_date":"2026-09-10","facility_name":"학생식당"},
+        {"meal_type":"lunch","name":"교직원 메뉴","description":"", "price":7000,
+         "image_url":null,"target_date":"2026-09-10","facility_name":"교직원식당"},
+        {"meal_type":"lunch","name":"창업 메뉴","description":"", "price":6500,
+         "image_url":null,"target_date":"2026-09-10","facility_name":"창업보육센터식당"},
+        {"meal_type":"dinner","name":"기숙사 메뉴","description":"", "price":5000,
+         "image_url":null,"target_date":"2026-09-10","facility_name":"창의인재원식당"}
+      ];
+    </script>
+    '''
+
+    def test_parses_embedded_json_date_and_only_selected_restaurant(self):
+        day, restaurant = parse_cafeteria(self.source, CAFETERIAS[0])
+
+        self.assertEqual(day, "2026-09-10")
+        self.assertEqual([meal["type"] for meal in restaurant["meals"]], ["조식", "중식"])
+        self.assertEqual(restaurant["meals"][0]["items"][0]["price"], "1,000원")
+        self.assertEqual(
+            restaurant["meals"][0]["items"][0]["image"],
+            "https://www.hanyang.ac.kr/uploads/breakfast.jpg",
+        )
+        self.assertNotIn("교직원 메뉴", json.dumps(restaurant, ensure_ascii=False))
+
+    def test_one_restaurant_failure_does_not_stop_output(self):
+        food_court = '''
+        <table><th>상호명</th><tbody>
+          <tr><td>테스트 매장</td><td>11:00–19:00</td><td>대표 메뉴</td></tr>
+        </tbody></table>
+        '''
+
+        def fake_fetch(url):
+            if url == CAFETERIAS[0]["url"]:
+                raise RuntimeError("temporary failure")
+            if url == fetch_menu.FOOD_COURT_URL:
+                return food_court
+            return self.source
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "menu.json"
+            with (
+                patch.object(fetch_menu, "fetch", side_effect=fake_fetch),
+                patch.object(fetch_menu, "OUTPUT", output),
+                patch.object(fetch_menu.time, "sleep"),
+            ):
+                fetch_menu.main()
+
+            payload = json.loads(output.read_text())
+
+        self.assertEqual(payload["date"], "2026-09-10")
+        self.assertEqual(len(payload["restaurants"]), 4)
+        self.assertTrue(payload["restaurants"][0]["unavailable"])
+        self.assertEqual(payload["restaurants"][0]["meals"], [])
+        self.assertTrue(payload["restaurants"][1]["meals"])
+        self.assertEqual(payload["food_court"]["stores"][0]["name"], "테스트 매장")
 
 
 if __name__ == "__main__":
