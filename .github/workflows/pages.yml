@@ -8,6 +8,12 @@ on:
     # 정각 혼잡을 피하려고 매시 07분과 37분에 실행
     - cron: "7,37 22-23,1-3,7-9 * * *"
   workflow_dispatch:
+    inputs:
+      deploy_committed_menu:
+        description: "원본 차단 시 검증된 dist/menu.json 배포"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -23,15 +29,18 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    # HY-SQUARE blocks GitHub's Ubuntu runner egress with HTTP 403.
-    # macOS runners use a different network and can read the public source directly.
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: 코드 가져오기
         uses: actions/checkout@v4
 
       - name: 오늘 메뉴 수집
+        if: ${{ inputs.deploy_committed_menu != true }}
         run: python3 scripts/fetch_menu.py
+
+      - name: 커밋 메뉴 검증
+        if: ${{ inputs.deploy_committed_menu == true }}
+        run: python3 scripts/fetch_menu.py --validate-existing
 
       - name: GitHub Pages 설정
         uses: actions/configure-pages@v5

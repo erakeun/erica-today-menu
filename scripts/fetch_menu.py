@@ -9,6 +9,7 @@ from __future__ import annotations
 import html as html_lib
 import json
 import re
+import sys
 import time
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -391,5 +392,27 @@ def main() -> None:
     )
 
 
+def validate_existing() -> None:
+    payload = json.loads(OUTPUT.read_text(encoding="utf-8"))
+    today = datetime.now(KST).date().isoformat()
+    if payload.get("date") != today:
+        raise RuntimeError(f"커밋 메뉴 날짜가 오늘이 아닙니다: {payload.get('date')} != {today}")
+    restaurants = payload.get("restaurants", [])
+    valid_ids = {restaurant.get("id") for restaurant in restaurants if restaurant.get("meals")}
+    expected_ids = {config["id"] for config in CAFETERIAS}
+    if valid_ids != expected_ids:
+        raise RuntimeError(f"커밋 메뉴의 식당 데이터가 불완전합니다: {sorted(valid_ids)}")
+    stores = payload.get("food_court", {}).get("stores", [])
+    if len(stores) != len(FOOD_COURT_IDS):
+        raise RuntimeError(f"커밋 메뉴의 푸드코트 데이터가 불완전합니다: {len(stores)}곳")
+    print(
+        f"커밋 메뉴 검증 성공: date={today} restaurants={len(restaurants)} "
+        f"food_court={len(stores)}"
+    )
+
+
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["--validate-existing"]:
+        validate_existing()
+    else:
+        main()
