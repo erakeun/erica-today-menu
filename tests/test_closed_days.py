@@ -58,6 +58,15 @@ class CurrentPortalParserTests(unittest.TestCase):
         {"meal_type":"dinner","name":"기숙사 메뉴","description":"", "price":5000,
          "image_url":null,"target_date":"2026-09-10","facility_name":"창의인재원식당"}
       ];
+      const dbFacilitiesList = [
+        {"id":12,"name":"BLUEPOT","category":"카페/베이커리","location":"학생복지관 2F"},
+        {"id":13,"name":"Pan&Wok","category":"일반음식점","location":"학생복지관 2층"},
+        {"id":14,"name":"33떡볶이&꼬마김밥","category":"일반음식점","location":"학생복지관 2층"},
+        {"id":15,"name":"FRESH BURRITOS","category":"일반음식점","location":"학생복지관 2층"},
+        {"id":16,"name":"바비든든","category":"일반음식점","location":"학생복지관 2층"},
+        {"id":17,"name":"산쪼메","category":"일반음식점","location":"학생복지관 2층"},
+        {"id":18,"name":"NEW YORK BURGER","category":"일반음식점","location":"학생복지관 2층"}
+      ];
     </script>
     '''
 
@@ -66,44 +75,49 @@ class CurrentPortalParserTests(unittest.TestCase):
 
         self.assertEqual(day, "2026-09-10")
         self.assertEqual([meal["type"] for meal in restaurant["meals"]], ["조식", "중식"])
+        self.assertEqual(restaurant["meals"][0]["items"][0]["name"], "천원의 아침밥")
+        self.assertEqual(restaurant["meals"][0]["items"][0]["description"], "쌀밥 깍두기")
         self.assertEqual(restaurant["meals"][0]["items"][0]["price"], "1,000원")
         self.assertEqual(
             restaurant["meals"][0]["items"][0]["image"],
-            "https://www.hanyang.ac.kr/uploads/breakfast.jpg",
+            "https://life.hanyang.ac.kr/uploads/breakfast.jpg",
         )
         self.assertNotIn("교직원 메뉴", json.dumps(restaurant, ensure_ascii=False))
 
-    def test_one_restaurant_failure_does_not_stop_output(self):
-        food_court = '''
-        <table><th>상호명</th><tbody>
-          <tr><td>테스트 매장</td><td>11:00–19:00</td><td>대표 메뉴</td></tr>
-        </tbody></table>
-        '''
-
-        def fake_fetch(url):
-            if url == CAFETERIAS[0]["url"]:
-                raise RuntimeError("temporary failure")
-            if url == fetch_menu.FOOD_COURT_URL:
-                return food_court
-            return self.source
-
+    def test_one_request_updates_good_restaurants_and_isolates_missing_one(self):
+        source = self.source.replace('"facility_name":"학생식당"', '"facility_name":"미등록식당"')
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "menu.json"
             with (
-                patch.object(fetch_menu, "fetch", side_effect=fake_fetch),
+                patch.object(fetch_menu, "fetch", return_value=source) as mocked_fetch,
                 patch.object(fetch_menu, "OUTPUT", output),
-                patch.object(fetch_menu.time, "sleep"),
             ):
                 fetch_menu.main()
 
             payload = json.loads(output.read_text())
 
+        mocked_fetch.assert_called_once_with(fetch_menu.HY_SQUARE_URL)
         self.assertEqual(payload["date"], "2026-09-10")
         self.assertEqual(len(payload["restaurants"]), 4)
         self.assertTrue(payload["restaurants"][0]["unavailable"])
         self.assertEqual(payload["restaurants"][0]["meals"], [])
         self.assertTrue(payload["restaurants"][1]["meals"])
-        self.assertEqual(payload["food_court"]["stores"][0]["name"], "테스트 매장")
+        self.assertEqual(len(payload["food_court"]["stores"]), 7)
+        self.assertEqual(payload["food_court"]["stores"][1]["name"], "Pan&Wok")
+
+    def test_total_failure_keeps_existing_output(self):
+        broken_source = "<script>const dbMenus = [];</script>"
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "menu.json"
+            output.write_text("last good deployment", encoding="utf-8")
+            with (
+                patch.object(fetch_menu, "fetch", return_value=broken_source),
+                patch.object(fetch_menu, "OUTPUT", output),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "메뉴 날짜"):
+                    fetch_menu.main()
+
+            self.assertEqual(output.read_text(), "last good deployment")
 
 
 if __name__ == "__main__":

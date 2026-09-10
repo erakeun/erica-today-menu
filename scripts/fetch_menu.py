@@ -11,7 +11,6 @@ import json
 import re
 import time
 import urllib.request
-from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from http.cookiejar import CookieJar
 from pathlib import Path
@@ -31,32 +30,34 @@ CAFETERIAS = (
         "name": "학생식당",
         "location": "복지관 2층",
         "hours": "조식 08:30–09:40 · 중식 11:30–13:30",
-        "url": "https://www.hanyang.ac.kr/re12",
+        "url": "https://life.hanyang.ac.kr/theme/pages/home.php",
     },
     {
         "id": "dormitory",
         "name": "창의인재원식당",
         "location": "창의관 1층",
         "hours": "조식 07:40–09:00 · 중식 11:30–13:20 · 석식 17:10–18:40",
-        "url": "https://www.hanyang.ac.kr/re13",
+        "url": "https://life.hanyang.ac.kr/theme/pages/home.php",
     },
     {
         "id": "incubator",
         "name": "창업보육센터",
         "location": "창업보육센터 지하 1층",
         "hours": "중식 11:30–13:30 · 석식 17:00–18:30",
-        "url": "https://www.hanyang.ac.kr/re15",
+        "url": "https://life.hanyang.ac.kr/theme/pages/home.php",
     },
     {
         "id": "faculty",
         "name": "교직원식당",
         "location": "복지관 3층",
         "hours": "중식 11:30–13:30",
-        "url": "https://www.hanyang.ac.kr/re11",
+        "url": "https://life.hanyang.ac.kr/theme/pages/home.php",
     },
 )
 
-FOOD_COURT_URL = "https://www.hanyang.ac.kr/re14"
+HY_SQUARE_URL = "https://life.hanyang.ac.kr/theme/pages/home.php"
+FOOD_COURT_URL = HY_SQUARE_URL
+FOOD_COURT_IDS = {12, 13, 14, 15, 16, 17, 18}
 SOURCE_NAMES = {
     "student": "학생식당",
     "dormitory": "창의인재원식당",
@@ -71,13 +72,12 @@ USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/152.0.0.0 Safari/537.36"
 )
-REQUEST_DELAY_SECONDS = 3
 OPENER = urllib.request.build_opener(
     urllib.request.HTTPCookieProcessor(CookieJar())
 )
 
 
-def fetch(url: str, attempts: int = 5) -> str:
+def fetch(url: str, attempts: int = 3) -> str:
     request = urllib.request.Request(
         url,
         headers={
@@ -91,12 +91,29 @@ def fetch(url: str, attempts: int = 5) -> str:
         try:
             with OPENER.open(request, timeout=20) as response:
                 charset = response.headers.get_content_charset() or "utf-8"
-                return response.read().decode(charset, errors="replace")
+                body = response.read()
+                print(
+                    "HTTP 응답: "
+                    f"attempt={attempt + 1}/{attempts} "
+                    f"status={response.status} "
+                    f"final_url={response.geturl()} "
+                    f"bytes={len(body)} charset={charset}"
+                )
+                return body.decode(charset, errors="replace")
         except Exception as exc:  # urllib raises several transport error types.
             last_error = exc
+            print(
+                "HTTP 실패: "
+                f"attempt={attempt + 1}/{attempts} url={url} "
+                f"status={getattr(exc, 'code', 'n/a')} "
+                f"final_url={getattr(exc, 'url', url)} "
+                f"exception={type(exc).__name__}: {exc}"
+            )
             if attempt + 1 < attempts:
                 time.sleep(2 ** attempt)
-    raise RuntimeError(f"공식 페이지를 불러오지 못했습니다: {url}") from last_error
+    raise RuntimeError(
+        f"HY-SQUARE 페이지를 {attempts}회 시도했지만 불러오지 못했습니다: {url}"
+    ) from last_error
 
 
 def clean_text(fragment: str) -> str:
@@ -127,16 +144,28 @@ def restaurant_record(config: dict[str, str], meals: list[dict]) -> dict:
     }
 
 
+def extract_json_array(source: str, variable: str) -> list[dict]:
+    match = re.search(
+        rf"\bconst\s+{re.escape(variable)}\s*=\s*(\[.*?\])\s*;",
+        source,
+        re.DOTALL,
+    )
+    if not match:
+        raise RuntimeError(f"HY-SQUARE 페이지에서 {variable} 데이터를 찾지 못했습니다.")
+    try:
+        value = json.loads(match.group(1))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"HY-SQUARE의 {variable} 데이터가 올바르지 않습니다.") from exc
+    if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
+        raise RuntimeError(f"HY-SQUARE의 {variable} 데이터 형식이 올바르지 않습니다.")
+    return value
+
+
 def parse_embedded_menus(source: str, config: dict[str, str]) -> tuple[str, dict] | None:
     """Parse the consolidated menu JSON used by the current welfare portal."""
-    match = re.search(r"\bconst\s+dbMenus\s*=\s*(\[.*?\])\s*;", source, re.DOTALL)
-    if not match:
+    if not re.search(r"\bconst\s+dbMenus\s*=", source):
         return None
-
-    try:
-        all_items = json.loads(match.group(1))
-    except (json.JSONDecodeError, TypeError) as exc:
-        raise RuntimeError(f"{config['name']} 페이지의 메뉴 데이터가 올바르지 않습니다.") from exc
+    all_items = extract_json_array(source, "dbMenus")
 
     dates = {
         item.get("target_date")
@@ -166,7 +195,12 @@ def parse_embedded_menus(source: str, config: dict[str, str]) -> tuple[str, dict
             price = f"{raw_price:,.0f}원"
         else:
             price = clean_text(str(raw_price or ""))
-        item = {"menu": menu, "price": price}
+        item = {
+            "name": menu_name,
+            "description": description,
+            "menu": menu,
+            "price": price,
+        }
 
         raw_image = str(raw_item.get("image_url") or "").strip()
         if raw_image:
@@ -182,6 +216,8 @@ def parse_embedded_menus(source: str, config: dict[str, str]) -> tuple[str, dict
     ]
     restaurant = restaurant_record(config, meals)
     restaurant["closed"] = is_closed_day(menu_date, restaurant)
+    if not meals and not restaurant["closed"]:
+        restaurant["unavailable"] = True
     return menu_date, restaurant
 
 
@@ -249,32 +285,23 @@ def parse_cafeteria(source: str, config: dict[str, str]) -> tuple[str, dict]:
 
 
 def parse_food_court(source: str) -> list[dict]:
-    table_match = re.search(
-        r'<th[^>]*>.*?상호명.*?</th>.*?<tbody>(.*?)</tbody>',
-        source,
-        flags=re.DOTALL | re.IGNORECASE,
+    """Read the student-welfare food-court tenants from dbFacilitiesList."""
+    facilities = extract_json_array(source, "dbFacilitiesList")
+    stores = []
+    for facility in facilities:
+        if facility.get("id") not in FOOD_COURT_IDS:
+            continue
+        name = clean_text(str(facility.get("name") or ""))
+        location = clean_text(str(facility.get("location") or ""))
+        category = clean_text(str(facility.get("category") or ""))
+        if name:
+            stores.append({"name": name, "location": location, "category": category})
+
+    if {store["name"] for store in stores} and len(stores) == len(FOOD_COURT_IDS):
+        return stores
+    raise RuntimeError(
+        f"푸드코트 매장 {len(FOOD_COURT_IDS)}곳 중 {len(stores)}곳만 찾았습니다."
     )
-    if not table_match:
-        raise RuntimeError("푸드코트 페이지의 매장 표가 변경되었습니다.")
-
-    stores: list[dict] = []
-    for row_html in re.findall(r"<tr[^>]*>(.*?)</tr>", table_match.group(1), re.DOTALL):
-        cells = re.findall(r"<td[^>]*>(.*?)</td>", row_html, re.DOTALL | re.IGNORECASE)
-        values = [clean_text(cell) for cell in cells]
-        if len(values) >= 3:
-            stores.append(
-                {
-                    "name": values[0],
-                    "hours": values[1],
-                    "menu": values[2],
-                }
-            )
-        elif len(values) == 1 and stores:
-            stores[-1]["menu"] = f"{stores[-1]['menu']}, {values[0]}"
-
-    if not stores:
-        raise RuntimeError("푸드코트 매장 정보를 찾지 못했습니다.")
-    return stores
 
 
 def unavailable_restaurant(config: dict[str, str]) -> dict:
@@ -285,47 +312,58 @@ def unavailable_restaurant(config: dict[str, str]) -> dict:
 
 
 def main() -> None:
-    dates: list[str] = []
-    restaurants: list[dict] = []
-    failed_configs: list[dict[str, str]] = []
+    now = datetime.now(KST)
+    # The new portal embeds every cafeteria and food-court tenant in one response.
+    # A total request/parsing failure must happen before OUTPUT is touched so Pages
+    # keeps serving the last successful artifact.
+    source = fetch(HY_SQUARE_URL)
+    all_menus = extract_json_array(source, "dbMenus")
+    print(f"파싱 시작: dbMenus={len(all_menus)}개")
 
+    dates = {
+        item.get("target_date")
+        for item in all_menus
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("target_date", "")))
+    }
+    if len(dates) != 1:
+        raise RuntimeError(f"메뉴 날짜를 하나로 확정하지 못했습니다: {sorted(dates)}")
+    menu_date = dates.pop()
+    if menu_date != now.date().isoformat():
+        raise RuntimeError(
+            f"HY-SQUARE 메뉴가 오늘 날짜가 아닙니다: source={menu_date}, today={now.date()}"
+        )
+
+    restaurants = []
     for config in CAFETERIAS:
         try:
-            menu_date, restaurant = parse_cafeteria(fetch(config["url"]), config)
+            parsed_date, restaurant = parse_cafeteria(source, config)
+            if parsed_date != menu_date:
+                raise RuntimeError(f"날짜 불일치: {parsed_date} != {menu_date}")
         except Exception as exc:
-            print(f"경고: {config['name']} 메뉴를 건너뜁니다: {exc}")
-            failed_configs.append(config)
-        else:
-            dates.append(menu_date)
-            restaurants.append(restaurant)
-        # Avoid a burst of requests against the university's public site.
-        time.sleep(REQUEST_DELAY_SECONDS)
+            print(f"식당 파싱 실패: id={config['id']} exception={type(exc).__name__}: {exc}")
+            restaurant = unavailable_restaurant(config)
+        restaurants.append(restaurant)
+        item_count = sum(len(meal["items"]) for meal in restaurant["meals"])
+        print(
+            f"식당 파싱 결과: id={config['id']} meals={len(restaurant['meals'])} "
+            f"items={item_count} unavailable={restaurant.get('unavailable', False)}"
+        )
 
-    now = datetime.now(KST)
-    if dates:
-        menu_date = Counter(dates).most_common(1)[0][0]
-        if len(set(dates)) != 1:
-            print(f"경고: 식당별 메뉴 날짜가 일치하지 않습니다: {sorted(set(dates))}")
-    else:
-        menu_date = now.date().isoformat()
-        print(f"경고: 메뉴 날짜를 가져오지 못해 오늘 날짜를 사용합니다: {menu_date}")
-
-    failed_ids = {config["id"] for config in failed_configs}
-    by_id = {restaurant["id"]: restaurant for restaurant in restaurants}
-    restaurants = [
-        unavailable_restaurant(config)
-        if config["id"] in failed_ids
-        else by_id[config["id"]]
-        for config in CAFETERIAS
-    ]
+    available_restaurants = [restaurant for restaurant in restaurants if restaurant["meals"]]
+    if not available_restaurants:
+        raise RuntimeError("네 식당 메뉴를 하나도 수집하지 못해 기존 배포본을 유지합니다.")
 
     try:
-        food_court_stores = parse_food_court(fetch(FOOD_COURT_URL))
+        food_court_stores = parse_food_court(source)
         food_court_unavailable = False
     except Exception as exc:
-        print(f"경고: 푸드코트 정보를 건너뜁니다: {exc}")
+        print(f"푸드코트 파싱 실패: exception={type(exc).__name__}: {exc}")
         food_court_stores = []
         food_court_unavailable = True
+    print(
+        f"푸드코트 파싱 결과: stores={len(food_court_stores)} "
+        f"unavailable={food_court_unavailable}"
+    )
 
     payload = {
         "schema_version": 1,
@@ -335,7 +373,7 @@ def main() -> None:
         "restaurants": restaurants,
         "food_court": {
             "name": "푸드코트",
-            "note": "고정 운영 매장과 대표 메뉴",
+            "note": "학생복지관 2층 입점 매장",
             "source": FOOD_COURT_URL,
             "stores": food_court_stores,
             "unavailable": food_court_unavailable,

@@ -400,7 +400,7 @@
 
     <section id="foodCourt" hidden aria-label="푸드코트 매장">
       <div class="food-note">
-        <span>푸드코트는 고정 운영 매장과 대표 메뉴를 표시합니다.</span>
+        <span>푸드코트는 학생복지관 2층 입점 매장을 표시합니다.</span>
         <a class="source-link" id="foodCourtSource" target="_blank" rel="noopener">공식 안내 ↗</a>
       </div>
       <div class="food-grid" id="foodCourtGrid"></div>
@@ -495,8 +495,8 @@
         : foodCourt.stores.map(store => `
         <article class="store">
           <h2>${escapeHtml(store.name)}</h2>
-          <p class="store-hours">${escapeHtml(store.hours)}</p>
-          <p class="store-menu">${escapeHtml(store.menu)}</p>
+          <p class="store-hours">${escapeHtml(store.location || store.hours)}</p>
+          <p class="store-menu">${escapeHtml(store.category || store.menu)}</p>
         </article>`).join('');
     }
 
