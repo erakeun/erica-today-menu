@@ -23,7 +23,9 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    # HY-SQUARE blocks GitHub's Ubuntu runner egress with HTTP 403.
+    # macOS runners use a different network and can read the public source directly.
+    runs-on: macos-latest
     steps:
       - name: 코드 가져오기
         uses: actions/checkout@v4
