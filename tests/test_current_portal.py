@@ -72,6 +72,13 @@ class CurrentSourceTests(unittest.TestCase):
         self.assertEqual(item['description'], '')
         self.assertNotIn('image', item)
 
+    def test_malformed_date_object_only_isolates_its_restaurant(self):
+        menus = m.extract_json_array(FIXTURE, 'dbMenus')
+        menus[0]['target_date'] = {'wrong': 'shape'}
+        data = m.build_payload(source(menus), NOW)
+        self.assertEqual(data['restaurants'][0]['status'], 'source_error')
+        self.assertTrue(data['restaurants'][1]['meals'])
+
     def test_kst_boundary(self):
         utc = datetime.fromisoformat('2026-09-13T15:00:00+00:00')
         self.assertEqual(m.build_payload(FIXTURE, utc)['date'], '2026-09-14')

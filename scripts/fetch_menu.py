@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html as html_lib
 import json
+import math
 import os
 import re
 import time
@@ -263,6 +264,8 @@ def parse_items(all_items: list[dict], config: dict, menu_date: str) -> dict:
             raise SourceSchemaError(f"{config['id']}: 설명/사진 형식 오류")
         if price is not None and (isinstance(price, bool) or not isinstance(price, (int, float, str))):
             raise SourceSchemaError(f"{config['id']}: 가격 형식 오류")
+        if isinstance(price, (int, float)) and (not math.isfinite(price) or price < 0):
+            raise SourceSchemaError(f"{config['id']}: 가격 범위 오류")
         name, description = clean_text(name), clean_text(description)
         item = {"name": name, "description": description,
                 "menu": f"{name} · {description}" if description else name,
@@ -397,7 +400,7 @@ def build_payload(source: str, now: datetime) -> dict:
     print(f"파싱 시작: dbMenus={len(all_menus)}개 today={menu_date}")
     if not all_menus:
         raise SourceUnavailable("메뉴 날짜/메뉴 미등록: 새 배포 없이 마지막 정상본을 유지합니다.")
-    dates = {item.get("target_date") for item in all_menus}
+    dates = {item.get("target_date") for item in all_menus if isinstance(item.get("target_date"), str)}
     if menu_date not in dates:
         raise SourceSchemaError(f"오늘 메뉴 날짜가 없습니다: source={dates}, today={menu_date}")
     try:

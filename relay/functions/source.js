@@ -16,7 +16,13 @@ function parse(source, now) {
     return data;
   };
   const rawMenus = extract("dbMenus");
-  const rawFacilities = extract("dbFacilitiesList");
+  let rawFacilities;
+  try {
+    rawFacilities = extract("dbFacilitiesList");
+  } catch (error) {
+    console.warn("facility_schema_error", error.message);
+    rawFacilities = []; // Isolate food-court structure drift from real cafeteria menus.
+  }
   const menus = rawMenus.filter(m => MENU_IDS.has(m.facility_id)).map(m => pick(m,
     ["id", "facility_id", "meal_type", "name", "description", "price", "image_url", "target_date", "facility_name"]));
   const facilities = rawFacilities.filter(f => FACILITY_IDS.has(f.id)).map(f => pick(f,
@@ -31,7 +37,16 @@ function parse(source, now) {
   if (!menus.some(m => m.target_date === today && typeof m.name === "string" && m.name.trim() && ["breakfast", "lunch", "dinner"].includes(m.meal_type))) {
     throw new Error("No valid menu items");
   }
-  return {ok: true, state: "ready", data: {menus, facilities}};
+  const validItem = m => typeof m.name === "string" && m.name.trim() && ["breakfast", "lunch", "dinner"].includes(m.meal_type)
+    && (m.description == null || typeof m.description === "string")
+    && (m.image_url == null || typeof m.image_url === "string")
+    && (m.price == null || typeof m.price === "string" || (typeof m.price === "number" && Number.isFinite(m.price) && m.price >= 0));
+  const hasValidRestaurant = [...MENU_IDS].some(id => {
+    const rows = menus.filter(m => m.facility_id === id);
+    return rows.some(m => m.target_date === today) && rows.every(m => /^\d{4}-\d{2}-\d{2}$/.test(m.target_date || "") && (m.target_date !== today || validItem(m)));
+  });
+  if (!hasValidRestaurant) throw new Error("All restaurants have invalid item shapes");
+  return {ok: true, state: "ready", data: {menus, facilities, menu_date: today}};
 }
 
 async function collect(fetcher, now = new Date()) {
@@ -65,7 +80,7 @@ async function collect(fetcher, now = new Date()) {
 
 function publicStatus(data) {
   return {ok: data.state === "ready" && Boolean(data.last_good?.menus?.length), state: data.state || "not_checked", checked_at: data.checked_at || null,
-    last_success_at: data.last_success_at || null, menu_date: data.last_good?.menus?.find(m => m.target_date)?.target_date || null};
+    last_success_at: data.last_success_at || null, menu_date: data.last_good?.menu_date || data.last_good?.menus?.find(m => m.target_date)?.target_date || null};
 }
 function mergeResult(previous, result) {
   const next = {...previous, ...result};

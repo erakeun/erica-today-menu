@@ -81,3 +81,10 @@ test('persistent state keeps exact last good content and time on failure', () =>
 test('missing menu dates are schema failure', () => {
   assert.throws(() => parse(fixture.replaceAll('target_date', 'missing_date'), now), /Missing menu dates/);
 });
+
+test('missing facility array does not discard valid cafeteria menus', () => {
+  const result = parse(fixture.replace('const dbFacilitiesList', 'const changedFacilities'), now);
+  assert.equal(result.ok, true);
+  assert.equal(result.data.menus.length, 11);
+  assert.deepEqual(result.data.facilities, []);
+});
