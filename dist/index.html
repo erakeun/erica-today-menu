@@ -490,7 +490,7 @@
             </div>
             <a class="source-link" href="${escapeHtml(restaurant.source)}" target="_blank" rel="noopener">원문 ↗</a>
           </header>
-          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : `<p class="empty">${restaurant.status === 'source_error' ? '식당 정보를 확인하지 못했습니다. 원문에서 확인해 주세요.' : restaurant.closed === true && restaurant.meals.length === 0 ? '주말 및 공휴일에는 운영하지 않습니다.' : restaurant.status === 'not_registered' ? '오늘 메뉴 미등록 · 아직 등록된 메뉴가 없습니다.' : restaurant.unavailable === true ? '메뉴 정보 없음' : '해당 시간에 등록된 메뉴가 없습니다.'}</p>`}
+          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : `<p class="empty">${restaurant.status === 'source_error' ? '식당 정보를 확인하지 못했습니다. 원문에서 확인해 주세요.' : restaurant.closed === true && restaurant.meals.length === 0 ? '주말 및 공휴일에는 운영하지 않습니다.' : restaurant.status === 'not_registered' ? (state.data.date === todayInSeoul() ? '오늘 메뉴 미등록 · 아직 등록된 메뉴가 없습니다.' : '해당 날짜에 등록된 메뉴가 없습니다.') : restaurant.unavailable === true ? '메뉴 정보 없음' : '해당 시간에 등록된 메뉴가 없습니다.'}</p>`}
         </article>`;
     }
 
@@ -587,7 +587,11 @@
           stale_source: '원본의 오늘 메뉴 갱신 지연',
           relay_internal_error: '메뉴 자동 갱신 상태 확인 지연'
         };
-        const message = messages[status.state];
+        const checkedDay = status.checked_at ? new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit'
+        }).format(new Date(status.checked_at)) : null;
+        const message = status.state === 'not_registered' && checkedDay !== todayInSeoul()
+          ? '원본 갱신 확인 지연' : messages[status.state];
         if (message) {
           updated.textContent = `${message} · 마지막 정상 데이터 사용 중 · ${formatUpdated(data.generated_at, true).replace('오늘 메뉴 갱신 지연 · ', '')}`;
         } else if (!status.checked_at || Date.now() - Date.parse(status.checked_at) > 8 * 3600000) {

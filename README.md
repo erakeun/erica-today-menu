@@ -60,7 +60,7 @@ GAS는 실제 배포 시험에서 원본 HTTP 403으로 실패하여 **사용하
 
 ```sh
 python3 -m unittest discover -s tests
-node --test relay/functions/test/*.test.js
+node --test relay/functions/test/*.test.js tests/ui.test.cjs
 # UI만 로컬 확인: 운영 메뉴를 보존해 준비
 python3 scripts/prepare_pages.py
 # 검증된 중계에서 실제 오늘 메뉴 수집(수동 입력 아님)

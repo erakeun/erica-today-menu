@@ -26,4 +26,4 @@ jobs:
         with:
           node-version: '22'
       - name: Relay fixture tests (no network)
-        run: node --test relay/functions/test/*.test.js
+        run: node --test relay/functions/test/*.test.js tests/ui.test.cjs
