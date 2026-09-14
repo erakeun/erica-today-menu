@@ -370,7 +370,7 @@
     <p class="brand">HANYANG ERICA</p>
     <div class="headline-row">
       <div>
-        <h1>오늘의 메뉴</h1>
+        <h1 id="menuHeading">식당 메뉴</h1>
         <p class="date" id="menuDate">메뉴 날짜 확인 중</p>
       </div>
       <p class="updated" id="updatedAt" aria-live="polite">데이터 불러오는 중</p>
@@ -445,10 +445,19 @@
       }).format(date);
     }
 
-    function formatUpdated(value) {
-      return new Intl.DateTimeFormat('ko-KR', {
-        timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false
-      }).format(new Date(value)) + ' 갱신';
+    function todayInSeoul() {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit'
+      }).format(new Date());
+    }
+
+    function formatUpdated(value, stale) {
+      const formatted = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul', year: stale ? 'numeric' : undefined,
+        month: stale ? '2-digit' : undefined, day: stale ? '2-digit' : undefined,
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(new Date(value));
+      return `${stale ? '오늘 메뉴 갱신 지연 · ' : ''}마지막 정상 갱신 ${formatted}`;
     }
 
     function mealMarkup(meal, restaurantName) {
@@ -569,8 +578,10 @@
       })
       .then(data => {
         state.data = data;
-        document.querySelector('#menuDate').textContent = formatDate(data.date);
-        document.querySelector('#updatedAt').textContent = formatUpdated(data.generated_at);
+        const stale = data.date !== todayInSeoul();
+        document.querySelector('#menuHeading').textContent = stale ? '마지막 확인된 메뉴' : '오늘의 메뉴';
+        document.querySelector('#menuDate').textContent = `${stale ? '지난 메뉴 · ' : ''}${formatDate(data.date)}`;
+        document.querySelector('#updatedAt').textContent = formatUpdated(data.generated_at, stale);
         render();
       })
       .catch(() => {
