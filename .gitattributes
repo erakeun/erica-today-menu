@@ -1,0 +1,2 @@
+# Captured read-only upstream fixture: preserve its original whitespace.
+tests/fixtures/*.html -whitespace

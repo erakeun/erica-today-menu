@@ -20,7 +20,7 @@ jobs:
         run: python3 -m py_compile scripts/fetch_menu.py scripts/validate_menu.py
 
       - name: 테스트와 정적 빌드 검증
-        run: python3 -m unittest discover -s tests
+        run: python3 -m unittest discover -s tests -b
 
       - uses: actions/setup-node@v4
         with:

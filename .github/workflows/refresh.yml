@@ -1,6 +1,9 @@
 name: 메뉴 자동 갱신
 
 on:
+  schedule:
+    # KST 07/08/10/11/12/16/17/18시 07분·37분. Avoid top-of-hour queue peaks.
+    - cron: '7,37 22,23,1,2,3,7,8,9 * * *'
   workflow_dispatch:
     inputs:
       diagnose_direct:
@@ -29,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Python tests
-        run: python3 -m unittest discover -s tests
+        run: python3 -m unittest discover -s tests -b
       - name: Collect and validate today's menu
         id: menu
         run: python3 scripts/refresh_menu.py
