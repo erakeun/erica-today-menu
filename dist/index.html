@@ -490,7 +490,7 @@
             </div>
             <a class="source-link" href="${escapeHtml(restaurant.source)}" target="_blank" rel="noopener">원문 ↗</a>
           </header>
-          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : `<p class="empty">${restaurant.unavailable === true ? '메뉴 정보 없음' : restaurant.closed === true && restaurant.meals.length === 0 ? '주말 및 공휴일에는 운영하지 않습니다.' : '해당 시간에 등록된 메뉴가 없습니다.'}</p>`}
+          ${meals.length ? meals.map(meal => mealMarkup(meal, restaurant.name)).join('') : `<p class="empty">${restaurant.status === 'source_error' ? '식당 정보를 확인하지 못했습니다. 원문에서 확인해 주세요.' : restaurant.closed === true && restaurant.meals.length === 0 ? '주말 및 공휴일에는 운영하지 않습니다.' : restaurant.status === 'not_registered' ? '오늘 메뉴 미등록 · 아직 등록된 메뉴가 없습니다.' : restaurant.unavailable === true ? '메뉴 정보 없음' : '해당 시간에 등록된 메뉴가 없습니다.'}</p>`}
         </article>`;
     }
 
@@ -509,7 +509,7 @@
       const foodCourt = state.data.food_court;
       document.querySelector('#foodCourtSource').href = foodCourt.source;
       document.querySelector('#foodCourtGrid').innerHTML = foodCourt.unavailable === true
-        ? '<p class="empty">메뉴 정보 없음</p>'
+        ? '<p class="empty">푸드코트 정보를 확인하지 못했습니다. 원문에서 확인해 주세요.</p>'
         : foodCourt.stores.map(store => `
         <article class="store">
           <h2>${escapeHtml(store.name)}</h2>
@@ -571,6 +571,33 @@
 
     syncFilterButtons();
 
+    async function showSourceStatus(data) {
+      // Status-only endpoint: this request never fetches the school page.
+      const endpoint = 'https://asia-northeast3-erica-student-promoters-v4-dev.cloudfunctions.net/ericaMenuRelay/status';
+      const updated = document.querySelector('#updatedAt');
+      try {
+        const response = await fetch(endpoint, { signal: AbortSignal.timeout(6000) });
+        if (!response.ok) throw new Error('status unavailable');
+        const status = await response.json();
+        const stale = data.date !== todayInSeoul();
+        const messages = {
+          not_registered: '오늘 메뉴 미등록',
+          source_error: '원본 조회 일시 실패',
+          schema_error: '원본 메뉴 정보 확인 지연',
+          stale_source: '원본의 오늘 메뉴 갱신 지연',
+          relay_internal_error: '메뉴 자동 갱신 상태 확인 지연'
+        };
+        const message = messages[status.state];
+        if (message) {
+          updated.textContent = `${message} · 마지막 정상 데이터 사용 중 · ${formatUpdated(data.generated_at, true).replace('오늘 메뉴 갱신 지연 · ', '')}`;
+        } else if (!status.checked_at || Date.now() - Date.parse(status.checked_at) > 8 * 3600000) {
+          updated.textContent = `자동 갱신 확인 지연 · ${formatUpdated(data.generated_at, stale)}`;
+        }
+      } catch {
+        updated.textContent = `갱신 상태 확인 불가 · ${formatUpdated(data.generated_at, data.date !== todayInSeoul())}`;
+      }
+    }
+
     fetch(`./menu.json?v=${Date.now()}`, { cache: 'no-store' })
       .then(response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -583,6 +610,7 @@
         document.querySelector('#menuDate').textContent = `${stale ? '지난 메뉴 · ' : ''}${formatDate(data.date)}`;
         document.querySelector('#updatedAt').textContent = formatUpdated(data.generated_at, stale);
         render();
+        showSourceStatus(data);
       })
       .catch(() => {
         document.querySelector('#updatedAt').textContent = '메뉴를 불러오지 못함';

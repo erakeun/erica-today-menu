@@ -1,0 +1,29 @@
+name: 코드 검증
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: Python 구문 검사
+        run: python3 -m py_compile scripts/fetch_menu.py scripts/validate_menu.py
+
+      - name: 테스트와 정적 빌드 검증
+        run: python3 -m unittest discover -s tests
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Relay fixture tests (no network)
+        run: node --test relay/functions/test/*.test.js

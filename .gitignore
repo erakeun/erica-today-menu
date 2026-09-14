@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+dist/menu.json
+dist/menu.json.pending
+*-debug.log

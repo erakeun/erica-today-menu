@@ -1,0 +1,8 @@
+{
+  "name": "erica-menu-relay",
+  "private": true,
+  "main": "index.js",
+  "engines": {"node": "22"},
+  "scripts": {"test": "node --test test/*.test.js"},
+  "dependencies": {"firebase-functions": "7.3.2", "firebase-admin": "14.4.0"}
+}

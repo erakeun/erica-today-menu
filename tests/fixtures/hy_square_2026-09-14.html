@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <script src="/theme/assets/js/base.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- CSS 전역 스타일 (로드 순서: reset → tokens → typography → layout) -->
+  <link rel="stylesheet" href="/theme/assets/css/reset.css">
+  <link rel="stylesheet" href="/theme/assets/css/tokens.css">
+  <link rel="stylesheet" href="/theme/assets/css/typography.css">
+  <link rel="stylesheet" href="/theme/assets/css/layout.css">
+  
+  <!-- 컴포넌트 스타일 -->
+  <link rel="stylesheet" href="/theme/assets/css/components/button.css">
+  <link rel="stylesheet" href="/theme/assets/css/components/card.css">
+  <link rel="stylesheet" href="/theme/assets/css/components/badge.css">
+  <link rel="stylesheet" href="/theme/assets/css/components/form.css">
+  <link rel="stylesheet" href="/theme/assets/css/components/nav.css">
+  <link rel="stylesheet" href="/theme/assets/css/components/lang-switcher.css">
+
+
+  <!-- hreflang 태그 (SEO) -->
+  <link rel="alternate" hreflang="ko" href="/theme/pages/home.php">
+  <link rel="alternate" hreflang="en" href="/theme/en/pages/home.php">
+  <link rel="alternate" hreflang="zh" href="/theme/zh/pages/home.php">
+
+  <!-- MOCK 데이터 -->
+  <script src="/theme/assets/js/mock-data.js?v=1789349677"></script>
+
+  <link rel="stylesheet" href="/theme/assets/css/pages/home.css">
+
+</head>
+
+<body>
+
+  <!-- ==============================================================
+       HEADER 영역 (components/header.html 참조)
+       ============================================================== -->
+  <!-- ═══════════════════════════════════════════════════════════
+     1단: 유틸리티 바 (스크롤 시 숨김)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="hy-utility-bar" id="utility-bar">
+  <div class="hy-utility-bar__inner">
+    <span class="hy-utility-bar__title">HY-SQUARE · 한양대학교 ERICA 복지포털</span>
+    <div class="hy-utility-bar__actions">
+      <!-- 언어 전환 (KOR / ENG / CHN 인라인 3버튼) -->
+      <div class="hy-lang-switcher" id="lang-switcher">
+      <a href="/theme/pages/home.php"
+       class="hy-lang-btn is-active"
+       lang="ko">KOR</a>
+      <a href="/theme/en/pages/home.php"
+       class="hy-lang-btn "
+       lang="en">ENG</a>
+      <a href="/theme/zh/pages/home.php"
+       class="hy-lang-btn "
+       lang="zh">CHN</a>
+  </div>
+
+      <span class="hy-utility-bar__divider"></span>
+
+              <a href="/theme/pages/auth/login.php" class="hy-utility-bar__user-btn" id="btn-utility-login">
+          로그인        </a>
+      
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2단: 메인 네비게이션 (로고 + GNB, sticky 고정)
+     ═══════════════════════════════════════════════════════════ -->
+<nav class="hy-main-nav" id="main-nav" role="navigation" aria-label="메인">
+  <div class="hy-main-nav__inner">
+    <a href="/theme/pages/home.php" class="hy-main-nav__logo" aria-label="장학복지회 홈으로 이동">
+      <img src="/theme/assets/img/logo-full-standard.svg" alt="HY-SQUARE">
+    </a>
+
+    <!-- PC GNB 메뉴 -->
+    <div class="hy-main-nav__menu" id="main-nav-menu">
+      <a href="/theme/pages/home.php"
+        class="hy-main-nav__item is-active"
+        data-page="home">
+        메인      </a>
+      <a href="/theme/pages/facilities/index.php"
+        class="hy-main-nav__item "
+        data-page="facilities">
+        시설안내      </a>
+      <a href="/theme/pages/payment/ticket-shops.php"
+        class="hy-main-nav__item " data-page="ticket">
+        식권구매      </a>
+      <a href="/theme/pages/notice/index.php"
+        class="hy-main-nav__item " data-page="notice">
+        공지사항      </a>
+            <a href="/theme/pages/mypage/index.php"
+        class="hy-main-nav__item " data-page="mypage">
+        마이페이지      </a>
+    </div>
+
+    <!-- 모바일 햄버거 버튼 -->
+    <button class="hy-main-nav__hamburger" id="btn-hamburger" aria-label="메뉴 열기" aria-expanded="false">
+      <span class="material-symbols-sharp">menu</span>
+    </button>
+  </div>
+</nav>
+
+<!-- 스크롤 동작: 유틸리티 바 숨김/표시 -->
+<script>
+  (function () {
+    var utilityBar = document.getElementById('utility-bar');
+    if (!utilityBar) return;
+
+    var lastScrollY = 0;
+    var ticking = false;
+
+    function onScroll() {
+      var currentScrollY = window.scrollY;
+      if (currentScrollY > 60) {
+        utilityBar.classList.add('is-hidden');
+      } else {
+        utilityBar.classList.remove('is-hidden');
+      }
+      lastScrollY = currentScrollY;
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        window.requestAnimationFrame(onScroll);
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+
+  </script>
+  <!-- ==============================================================
+       GNB 영역 (components/gnb.html 참조)
+       ============================================================== -->
+    <!-- 모바일 하단 GNB 탭바 (PC에서는 CSS로 숨김) -->
+  <nav class="hy-gnb" id="site-gnb" role="navigation" aria-label="메인">
+    <div class="hy-gnb__inner">
+      <a href="/theme/pages/home.php" class="hy-gnb__item is-active" data-page="home">
+        <span class="material-symbols-sharp" aria-hidden="true">home</span>
+        <span class="hy-gnb__label">메인</span>
+      </a>
+      <a href="/theme/pages/facilities/index.php" class="hy-gnb__item " data-page="facilities">
+        <span class="material-symbols-sharp" aria-hidden="true">business</span>
+        <span class="hy-gnb__label">시설안내</span>
+      </a>
+      <a href="/theme/pages/payment/ticket-shops.php" class="hy-gnb__item " data-page="ticket">
+        <span class="material-symbols-sharp" aria-hidden="true">local_dining</span>
+        <span class="hy-gnb__label">식권구매</span>
+      </a>
+      <a href="/theme/pages/notice/index.php" class="hy-gnb__item " data-page="notice">
+        <span class="material-symbols-sharp" aria-hidden="true">campaign</span>
+        <span class="hy-gnb__label">공지사항</span>
+      </a>
+            <a href="/theme/pages/mypage/index.php" class="hy-gnb__item " data-page="mypage">
+        <span class="material-symbols-sharp" aria-hidden="true">person</span>
+        <span class="hy-gnb__label">마이페이지</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ==============================================================
+       PAGE WRAPPER (Main + Sidebar)
+       ============================================================== -->
+  <div class="hy-page-wrapper">
+
+    <!-- 본문 영역 -->
+    <main class="hy-main">
+
+      <!-- 1. 식당 메뉴 섹션 -->
+      <section class="hy-section hy-section--no-border home-menu-section">
+
+        <!-- 시간대 탭 -->
+        <div id="cafe-tabs-container">
+          <div class="hy-tabs" id="cafe-tabs">
+            <div class="hy-tab is-active" data-time="breakfast">조식 <span class="cafe-time">(08:00~)</span></div>
+            <div class="hy-tab" data-time="lunch">중식 <span class="cafe-time">(11:30~)</span></div>
+            <div class="hy-tab" data-time="dinner">석식 <span class="cafe-time">(17:30~)</span></div>
+          </div>
+        </div>
+
+        <!-- 메뉴 스크롤 컨테이너 -->
+        <div class="home-menu-scroll" id="cafe-menu-container">
+          <!-- JS로 mock 데이터 렌더링 -->
+        </div>
+      </section>
+
+      <!-- 2. 시설 안내 -- 카테고리별 배치 -->
+      <section class="hy-section hy-section--no-border">
+        <div class="hy-section-title">
+          시설안내          <a href="/theme/pages/facilities/index.php" class="hy-more-link">더보기 &gt;</a>
+        </div>
+        <div id="facility-grid-container"></div>
+      </section>
+
+    </main>
+
+    <!-- 사이드바 영역 -->
+    <!-- 사이드바 영역 -->
+<style>
+  /* PC 모드: .hy-sidebar__utility 숨김 */
+  @media (min-width: 1025px) {
+    .hy-sidebar__utility {
+      display: none !important;
+    }
+  }
+</style>
+<div class="hy-sidebar-overlay" id="site-sidebar-overlay"></div>
+<aside class="hy-sidebar" id="site-sidebar">
+  <!-- 모바일 유틸리티 영역 (햄버거 메뉴 상단) -->
+  <div class="hy-sidebar__utility">
+    <div class="hy-flex hy-justify-between hy-items-center hy-mb-3">
+      <div class="hy-lang-switcher" id="lang-switcher">
+      <a href="/theme/pages/home.php"
+       class="hy-lang-btn is-active"
+       lang="ko">KOR</a>
+      <a href="/theme/en/pages/home.php"
+       class="hy-lang-btn "
+       lang="en">ENG</a>
+      <a href="/theme/zh/pages/home.php"
+       class="hy-lang-btn "
+       lang="zh">CHN</a>
+  </div>
+      <button class="hy-sidebar__close" id="btn-sidebar-close" aria-label="닫기">
+        <span class="material-symbols-sharp">close</span>
+      </button>
+    </div>
+  </div>
+
+      <!-- 로그아웃 상태 -->
+    <div class="hy-section hy-p-5 hy-text-center">
+      <div class="text-h4 hy-mb-2">
+        <span class="material-symbols-sharp"
+          style="font-size: 20px; vertical-align: text-bottom; color: var(--hy-color-neutral-400);">lock</span>
+        로그인이 필요합니다      </div>
+      <div class="text-p hy-text-secondary hy-mb-4">
+        장학복지회 서비스를 이용하시려면 로그인을 해주세요.      </div>
+      <a href="/theme/pages/auth/login.php" class="hy-btn hy-btn--primary hy-w-full"
+        style="letter-spacing: 0.08em;">
+        <span class="material-symbols-sharp">login</span> LOG-IN
+      </a>
+    </div>
+  </aside>
+<script>
+  // PHP로 렌더링된 사이드바가 있으면 JS Mock 렌더링을 우회하기 위한 플래그
+  window.__SIDEBAR_RENDERED_BY_PHP__ = true;
+
+  // 햄버거 메뉴 ↔ 사이드바 토글
+  (function () {
+    var hamburger = document.getElementById('btn-hamburger');
+    var sidebar = document.getElementById('site-sidebar');
+    var overlay = document.getElementById('site-sidebar-overlay');
+    var closeBtn = document.getElementById('btn-sidebar-close');
+
+    function openSidebar() {
+      sidebar.classList.add('is-open');
+      overlay.classList.add('is-active');
+      hamburger.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('is-open');
+      overlay.classList.remove('is-active');
+      hamburger.setAttribute('aria-expanded', 'false');
+      if (window.innerWidth < 1024) document.body.style.overflow = '';
+    }
+
+    // PC 모드(≥1024px): 사이드바 항상 반응하도록 스크롤 고정
+    function applyPcScrollLock() {
+      if (window.innerWidth >= 1024) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    }
+    applyPcScrollLock();
+    window.addEventListener('resize', applyPcScrollLock);
+
+    if (hamburger) hamburger.addEventListener('click', openSidebar);
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+    if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  })();
+</script>
+  </div>
+
+  <!-- ==============================================================
+       FOOTER 영역 (components/footer.html 참조)
+       ============================================================== -->
+  <footer class="hy-footer" id="site-footer">
+  <div class="hy-footer__inner">
+    <!-- <div class="hy-footer__logo">한양대학교 ERICA 장학복지회</div>
+    <div class="hy-footer__info">
+      한양대학교 ERICA 캠퍼스 장학복지회<br>
+      경기도 안산시 상록구 한양대학로 55<br>
+      TEL. 031-000-0000 &nbsp;|&nbsp; E-mail. welfare@hanyang.ac.kr    </div> -->
+    <div class="hy-footer__copy">
+      © 2026 Hanyang University All rights reserved.    </div>
+  </div>
+</footer>
+  <!-- ==============================================================
+       페이지 스크립트 (Mock Data 렌더링)
+       ============================================================== -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // 사이드바 렌더링
+      HY_MOCK.renderSidebar();
+
+      // 모바일 GNB 마이페이지 표시 처리
+      const mobileMypageBtn = document.querySelector('.hy-gnb__item--mobile-only');
+      if (window.innerWidth <= 767 && mobileMypageBtn) {
+        mobileMypageBtn.style.display = '';
+      }
+
+      /* 1. 식단 메뉴 렌더링 */
+      const dbMenus = [{"id":147,"facility_id":1,"type":"menu","meal_type":"breakfast","name":"[천원의아침밥] 꼬치어묵탕 Fish Cake Skewers and Broth","description":"쌀밥\r\n너비아니엿장조림\r\n도시락김\r\n진미채고추장볶음\r\n배추김치","price":1000,"image_url":"\/uploads\/facilities\/menu_1789342433_6aa732e1f0e1e.jpg","is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 10:04:52","facility_name":"학생식당","facility_name_en":"","facility_name_zh":"","facility_no":"102","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":148,"facility_id":1,"type":"menu","meal_type":"lunch","name":"매운삼겹살볶음밥 Spicy Fried Rice with Pork Belly","description":"꼬들단무지\r\n배추김치\r\n일식장국","price":4500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 10:05:18","facility_name":"학생식당","facility_name_en":"","facility_name_zh":"","facility_no":"102","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":149,"facility_id":1,"type":"menu","meal_type":"lunch","name":"열무물김치국수 Yeolmu Water Kimchi Noodles","description":"김가루양념밥\r\n갈비만두튀김\r\n감자전\r\n꼬들단무지","price":6500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 10:05:52","facility_name":"학생식당","facility_name_en":"","facility_name_zh":"","facility_no":"102","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":137,"facility_id":2,"type":"menu","meal_type":"lunch","name":"장터해장국 Jangteo Hangover Soup","description":"비엔나야채볶음\r\n고구마떡맛탕\r\n통들깨부추무침\r\n깍두기\r\n잡곡밥\r\n그린샐러드","price":6500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 10:00:02","facility_name":"교직원식당","facility_name_en":"","facility_name_zh":"","facility_no":"102","location":"학생복지관 3층","location_en":"Student Welfare Building 3F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":138,"facility_id":2,"type":"menu","meal_type":"lunch","name":"나물비빔밥 &계란후라이 Vegetable Bibimbap & Fried Egg","description":"춘권튀김\r\n호박고추장국\r\n배추김치","price":5500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 10:00:26","facility_name":"교직원식당","facility_name_en":"","facility_name_zh":"","facility_no":"102","location":"학생복지관 3층","location_en":"Student Welfare Building 3F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":127,"facility_id":3,"type":"menu","meal_type":"lunch","name":"가마솥묵은지제육볶음 Stir-Fried Pork with Kimchi","description":"삼색계란찜\r\n아삭콩나물무침\r\n시래기된장국\r\n잡곡밥\r\n배추김치\r\n양배추샐러드*드레싱","price":6500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 09:55:13","facility_name":"창업보육센터식당","facility_name_en":"","facility_name_zh":"","facility_no":"308","location":"창업보육센터 지하1층","location_en":"Hanyang Business Incubator, B1","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":128,"facility_id":3,"type":"menu","meal_type":"dinner","name":"구운닭가슴살카레라이스 Grilled Chicken Curry Rice","description":"참치콘마요모닝빵\r\n매콤어묵볶음\r\n쌀밥\r\n유부장국\r\n배추김치\r\n양배추샐러드*드레싱","price":6500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 09:55:39","facility_name":"창업보육센터식당","facility_name_en":"","facility_name_zh":"","facility_no":"308","location":"창업보육센터 지하1층","location_en":"Hanyang Business Incubator, B1","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":162,"facility_id":4,"type":"menu","meal_type":"breakfast","name":"[천원의아침밥] 든든한 소고기무국 Hearty Korean Beef and Radish Soup","description":"쌀밥\r\n야채샐러드*드레싱\r\n배추김치\r\n시리얼*우유\r\n","price":1000,"image_url":"\/uploads\/facilities\/menu_1789339369_6aa726e9c2724.jpg","is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 11:41:51","facility_name":"창의인재원식당","facility_name_en":"","facility_name_zh":"","facility_no":"501","location":"창의관 1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":163,"facility_id":4,"type":"menu","meal_type":"lunch","name":"지코바ST 치킨덮밥 Jikoba ST Chicken Rice Bowl","description":"쌀밥\r\n유부장국\r\n맛살브로콜리볶음\r\n깍두기","price":4500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 11:42:18","facility_name":"창의인재원식당","facility_name_en":"","facility_name_zh":"","facility_no":"501","location":"창의관 1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":164,"facility_id":4,"type":"menu","meal_type":"lunch","name":"뚝]돈갈비김치찜 Braised Pork Ribs & Kimchi Hot Pot","description":"쌀밥\r\n유부장국\r\n맛살브로콜리볶음\r\n깍두기","price":4500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 11:42:39","facility_name":"창의인재원식당","facility_name_en":"","facility_name_zh":"","facility_no":"501","location":"창의관 1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"},{"id":165,"facility_id":4,"type":"menu","meal_type":"dinner","name":"숯불제육불고기 Charcoal-Grilled Spicy Pork","description":"쌀밥\r\n맑은순두부국\r\n미역줄기볶음\r\n배추김치","price":4500,"image_url":null,"is_sold_out":0,"target_date":"2026-09-14","created_at":"2026-09-11 11:43:16","facility_name":"창의인재원식당","facility_name_en":"","facility_name_zh":"","facility_no":"501","location":"창의관 1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","color_code":"#3b82f6","facility_status":"inactive"}];
+
+      const renderCafeteria = (timeStr) => {
+        const container = document.getElementById('cafe-menu-container');
+        container.innerHTML = '';
+
+        const menus = dbMenus.filter(m => m.meal_type === timeStr);
+        if (menus.length === 0) {
+          container.innerHTML = `<div class="hy-text-secondary" style="padding: 20px;">등록된 메뉴가 없습니다.</div>`;
+          return;
+        }
+
+        let prevRestaurant = '';
+        menus.forEach(menu => {
+          if (prevRestaurant && prevRestaurant !== menu.facility_name) {
+            // 식당별 구분선 삽입
+            const dividerHtml = `<div style="flex: 0 0 1px; background: var(--hy-border-color); margin: 0 var(--hy-space-2);"></div>`;
+            container.insertAdjacentHTML('beforeend', dividerHtml);
+          }
+          prevRestaurant = menu.facility_name;
+
+          const rInfo = {
+            no: menu.facility_no || '',
+            loc: menu.location || '',
+            color: menu.color_code || '#9ca3af'
+          };
+
+          const itemsHtml = (menu.description || '').replace(/\n/g, '<br>');
+
+          let fallbackIcon = 'restaurant';
+          let fallbackText = '';
+          if (menu.meal_type === 'breakfast') {
+            fallbackIcon = 'breakfast_dining';
+            fallbackText = 'Breakfast Dining';
+          } else if (menu.meal_type === 'lunch') {
+            fallbackIcon = 'lunch_dining';
+            fallbackText = 'Lunch Dining';
+          } else if (menu.meal_type === 'dinner') {
+            fallbackIcon = 'dinner_dining';
+            fallbackText = 'Dinner Dining';
+          }
+
+          const imgHtml = menu.image_url
+            ? `<img src="${menu.image_url}" alt="${menu.name}" class="hy-w-full hy-h-full hy-object-cover">`
+            : `<span class="material-symbols-sharp">${fallbackIcon}</span><span>${fallbackText}</span>`;
+
+          const cardHtml = `
+            <div class="home-menu-card">
+              <div class="home-menu-card__header">
+                <div class="rest-badge" style="background-color: ${rInfo.color};">${rInfo.no}</div>
+                <div class="rest-info">
+                  <div class="rest-loc">${rInfo.loc}</div>
+                  <div class="rest-name">${menu.facility_name}</div>
+                </div>
+              </div>
+              <div class="home-menu-card__img hy-relative" >
+                ${imgHtml}
+              </div>
+              <div class="home-menu-card__name">${menu.name}</div>
+              <div class="home-menu-card__items">${itemsHtml}</div>
+              <div class="home-menu-card__bottom">
+                <span class="hy-price">${HY_MOCK.formatPrice(menu.price)}</span>
+                ${menu.facility_status === 'active' ? `<button class="hy-btn hy-btn--sm hy-btn--primary" onclick="location.href='/theme/pages/payment/buy-ticket.php?product_id=${menu.id}'">구매하기</button>` : ''}
+              </div>
+            </div>
+          `;
+          container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+      };
+
+      // 식단 탭 이벤트 바인딩
+      const tabs = document.querySelectorAll('#cafe-tabs .hy-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          tabs.forEach(t => t.classList.remove('is-active'));
+          e.currentTarget.classList.add('is-active');
+          renderCafeteria(e.currentTarget.dataset.time);
+        });
+      });
+      // 초기 렌더링 (시간 기준 자동 선택)
+      const currentHour = new Date().getHours();
+      let initTabTime = 'lunch';
+      if (currentHour < 10) initTabTime = 'breakfast';
+      else if (currentHour >= 16) initTabTime = 'dinner';
+
+      const targetTab = document.querySelector(`#cafe-tabs .hy-tab[data-time="${initTabTime}"]`);
+      if (targetTab) targetTab.click();
+      else renderCafeteria('lunch');
+
+
+      /* 2. 시설 안내 — 카테고리별 그리드 배치 */
+      const dbFacilitiesList = [{"id":1,"name":"학생식당","name_en":"","name_zh":"","category":"구내식당","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8db8926ecae.jpg","facility_no":"102"},{"id":2,"name":"교직원식당","name_en":"","name_zh":"","category":"구내식당","location":"학생복지관 3층","location_en":"Student Welfare Building 3F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8759226d44b.jpg","facility_no":"102"},{"id":3,"name":"창업보육센터식당","name_en":"","name_zh":"","category":"구내식당","location":"창업보육센터 지하1층","location_en":"Hanyang Business Incubator, B1","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8de00b21f8e.jpg","facility_no":"308"},{"id":4,"name":"창의인재원식당","name_en":"","name_zh":"","category":"구내식당","location":"창의관 1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8de930d639b.jpg","facility_no":"501"},{"id":12,"name":"BLUEPOT","name_en":"","name_zh":"","category":"카페\/베이커리","location":"학생복지관 2F","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a960a65b176c.jpg","facility_no":"102"},{"id":13,"name":"Pan&Wok","name_en":"","name_zh":"","category":"일반음식점","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a950b3fb500a.jpg","facility_no":"102"},{"id":14,"name":"33떡볶이&꼬마김밥","name_en":"","name_zh":"","category":"일반음식점","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a95078046940.jpg","facility_no":"102"},{"id":15,"name":"FRESH BURRITOS","name_en":"","name_zh":"","category":"일반음식점","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e29a048888.jpg","facility_no":"102"},{"id":16,"name":"바비든든","name_en":"","name_zh":"","category":"일반음식점","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a875107e6b2b.jpg","facility_no":"102"},{"id":17,"name":"산쪼메","name_en":"Sanchome","name_zh":"","category":"일반음식점","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e283466f18.jpg","facility_no":"102"},{"id":18,"name":"NEW YORK BURGER","name_en":"","name_zh":"","category":"일반음식점","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8da1de5ebb2.jpg","facility_no":"102"},{"id":19,"name":"Daily Beetle Juice","name_en":"","name_zh":"","category":"카페\/베이커리","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a87570cd5373.jpg","facility_no":"102"},{"id":20,"name":"합동문화사","name_en":"","name_zh":"","category":"인쇄\/문구\/서점\/기념품","location":"제1학술관 1층","location_en":"Educational Building Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9dfab550fac.png","facility_no":"209"},{"id":21,"name":"행복한 짬뽕","name_en":"","name_zh":"","category":"일반음식점","location":"ERICA컨벤션센터 1F","location_en":"Hanyang Convention Center 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e2776623b1.jpg","facility_no":"307"},{"id":22,"name":"바르바커피","name_en":"BARVA COFFEE","name_zh":"","category":"카페\/베이커리","location":"ERICA컨벤션센터 1F","location_en":"Hanyang Convention Center 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9a55a97ad24.png","facility_no":"307"},{"id":23,"name":"바르바꽃집","name_en":"BARVA FLOWER","name_zh":"","category":"생활서비스","location":"ERICA컨벤션센터 1F","location_en":"Hanyang Convention Center 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8d95666d03e.jpg","facility_no":"307"},{"id":24,"name":"더베이크 한양대에리카점","name_en":"","name_zh":"","category":"카페\/베이커리","location":"융합교육관 1F","location_en":"","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9a65a44eab0.jpg","facility_no":"317"},{"id":25,"name":"에르안경원","name_en":"","name_zh":"","category":"생활서비스","location":"학생복지관 3층","location_en":"Student Welfare Building 3F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8da04c957c6.jpg","facility_no":"102"},{"id":26,"name":"이모네","name_en":"","name_zh":"","category":"일반음식점","location":"창의관 1층 구내식당 내","location_en":"Inside the cafeteria of Student Residence Hall Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8daa7498c9c.jpg","facility_no":"501"},{"id":27,"name":"대학서적㈜","name_en":"","name_zh":"","category":"인쇄\/문구\/서점\/기념품","location":"학생복지관 3층","location_en":"Student Welfare Building 3F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e41af212ad.jpg","facility_no":"102"},{"id":29,"name":"오가다 안산상록구직영점","name_en":"Ogada","name_zh":"","category":"카페\/베이커리","location":"버스승강장 및 휴게실","location_en":"Bus stop & Student Lounge","location_zh":"","image_url":"\/uploads\/facilities\/fac_6aa0f800b0edf.jpg","facility_no":"306"},{"id":30,"name":"사람생각","name_en":"","name_zh":"","category":"인쇄\/문구\/서점\/기념품","location":"버스승강장 및 휴게실","location_en":"Bus stop & Student Lounge","location_zh":"","image_url":"\/uploads\/facilities\/fac_6aa7368b7c0a3.jpeg","facility_no":"306"},{"id":31,"name":"한양대문구점","name_en":"","name_zh":"","category":"인쇄\/문구\/서점\/기념품","location":"창의관 1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9a5fc506665.jpg","facility_no":"501"},{"id":32,"name":"그라찌에","name_en":"Grazie","name_zh":"","category":"카페\/베이커리","location":"창의관 1층 구내식당 내","location_en":"Inside the cafeteria of Student Residence Hall Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9a53e6d2f66.jpg","facility_no":"501"},{"id":33,"name":"bhc 치킨","name_en":"bhc CHICKEN","name_zh":"","category":"일반음식점","location":"창의관 1층 구내식당 내","location_en":"Inside the cafeteria of Student Residence Hall Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e27bb65168.jpg","facility_no":"501"},{"id":34,"name":"행복 휴게소 - 무인","name_en":"Happy Time","name_zh":"","category":"자동판매기","location":"학술정보관 2층","location_en":"Academic Information Center & Library 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8debc7b8e5a.jpg","facility_no":"401"},{"id":35,"name":"라이언스카페 - 무인","name_en":"Lion's Cafe","name_zh":"","category":"자동판매기","location":"디자인교육관 1층","location_en":"Design Education Hall 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a8ded3ca8ed6.jpg","facility_no":"110"},{"id":36,"name":"리플커피","name_en":"RIPPLE COFFEE","name_zh":"","category":"카페\/베이커리","location":"학생복지관 1층","location_en":"Student Welfare Building 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9500d455abc.jpg","facility_no":"102"},{"id":37,"name":"CU","name_en":"","name_zh":"","category":"편의점","location":"창의인재원 동관1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e5a4ae97f1.jpg","facility_no":"501"},{"id":38,"name":"한양대학교구내복사","name_en":"","name_zh":"","category":"인쇄\/문구\/서점\/기념품","location":"학생복지관 3층","location_en":"Student Welfare Building 3F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a95062c3b99c.jpg","facility_no":"102"},{"id":39,"name":"주식회사 스키피오 - 컴퓨터점","name_en":"","name_zh":"","category":"인쇄\/문구\/서점\/기념품","location":"학생복지관 3층","location_en":"Student Welfare Building 3F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9509b86016d.jpg","facility_no":"102"},{"id":40,"name":"스타벅스","name_en":"Starbucks","name_zh":"","category":"카페\/베이커리","location":"학생복지관 2층","location_en":"Student Welfare Building 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e233d20091.jpg","facility_no":"102"},{"id":41,"name":"BLUEPOT","name_en":"","name_zh":"","category":"카페\/베이커리","location":"경상관 1F","location_en":"Business and Economics Hall 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e0a178cef3.jpeg","facility_no":"201"},{"id":42,"name":"7-eleven","name_en":"","name_zh":"","category":"편의점","location":"창의인재원 교육관 1F","location_en":"Residential College 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9a639b48800.png","facility_no":"504"},{"id":43,"name":"한양헤어비스","name_en":"","name_zh":"","category":"생활서비스","location":"창의인재원 교육관 1F","location_en":"Residential College 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e2b92622f5.jpg","facility_no":"504"},{"id":44,"name":"emart24","name_en":"","name_zh":"","category":"편의점","location":"버스승강장 및 휴게실","location_en":"Bus stop & Student Lounge","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e2547d4d6e.jpg","facility_no":"306"},{"id":45,"name":"한양대구두점","name_en":"","name_zh":"","category":"생활서비스","location":"버스승강장 및 휴게실","location_en":"Bus stop & Student Lounge","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9dea512ecd1.png","facility_no":"306"},{"id":46,"name":"7-eleven","name_en":"","name_zh":"","category":"편의점","location":"제3공학관 B1","location_en":"","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e20f991a5d.jpg","facility_no":"303"},{"id":47,"name":"한양베이커리","name_en":"","name_zh":"","category":"카페\/베이커리","location":"창업보육센터 1F","location_en":"Hanyang Business Incubator, 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e41275725e.jpeg","facility_no":"308"},{"id":48,"name":"빨래방(유니룩스)","name_en":"Laundry room","name_zh":"","category":"생활서비스","location":"창의관 1층","location_en":"Student Residence Hall Ⅰ 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e2c920694e.jpg","facility_no":"501"},{"id":49,"name":"안산 한양대 우편 취급국","name_en":"Post Office","name_zh":"邮局","category":"생활서비스","location":"학생복지관 1F","location_en":"Student Welfare Building, 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e23da0abc9.jpg","facility_no":"102"},{"id":50,"name":"신한은행 한양대학교 출장소","name_en":"Shinhan Bank","name_zh":"","category":"생활서비스","location":"학생복지관 1F","location_en":"Student Welfare Building, 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a960f08eb4a5.jpg","facility_no":"102"},{"id":51,"name":"Cafe ING","name_en":"","name_zh":"","category":"카페\/베이커리","location":"학생복지관 3층","location_en":"Student Welfare Building, 3F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e26e15d963.jpg","facility_no":"102"},{"id":52,"name":"하냥모바일","name_en":"Hanyang Mobile","name_zh":"","category":"생활서비스","location":"학생복지관 3F","location_en":"Student Welfare Building, 3F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9a57c773aff.png","facility_no":"102"},{"id":53,"name":"7-eleven","name_en":"","name_zh":"","category":"편의점","location":"학생복지관 2층","location_en":"Student Welfare Building, 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e24d54ec70.jpg","facility_no":"102"},{"id":54,"name":"한양오피스","name_en":"Hanyang-Office","name_zh":"","category":"인쇄\/문구\/서점\/기념품","location":"학술정보관 2F","location_en":"Academic Information Center & Library, 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e2dbe1aa15.jpg","facility_no":"401"},{"id":55,"name":"(주)비트코퍼레이션-로봇커피자판기","name_en":"","name_zh":"","category":"자동판매기","location":"학술정보관 1F","location_en":"Academic Information Center & Library, 1F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e1d90e11b1.jpg","facility_no":"401"},{"id":56,"name":"㈜카페해나 - 무인","name_en":"","name_zh":"","category":"자동판매기","location":"체육관 2F","location_en":"Gymnasium 2F","location_zh":"","image_url":"\/uploads\/facilities\/fac_6a9e3be93edaf.jpg","facility_no":"402"}];
+      const catMap = {"구내식당":"구내식당","일반음식점":"일반음식점","카페\/베이커리":"카페\/베이커리","편의점":"편의점","인쇄\/문구\/서점\/기념품":"인쇄\/문구\/서점\/기념품","자동판매기":"자동판매기","생활서비스":"생활서비스"};
+      const facGridContainer = document.getElementById('facility-grid-container');
+
+      // 카테고리 분류 설정
+      const PRIMARY_CATS = ['구내식당', '일반음식점', '카페/베이커리'];
+      const detailUrl = '/theme/pages/facilities/detail.php';
+      const shopUrl   = '/theme/pages/facilities/shop-detail.php';
+
+      if (facGridContainer && dbFacilitiesList.length > 0) {
+        // 카테고리별로 그룹핑
+        const catGroups = {};
+        dbFacilitiesList.forEach(f => {
+          let cat = f.category || '기타';
+          let isPrimary = PRIMARY_CATS.includes(cat);
+          let groupKey = isPrimary ? cat : '__etc__';
+          
+          if (isPrimary) {
+            // 주요 카테고리(구내식당 등)는 건물번호와 무관하게 해당 카테고리에만 노출
+            if (!catGroups[groupKey]) catGroups[groupKey] = [];
+            catGroups[groupKey].push(f);
+            return;
+          }
+
+          // 주요 카테고리가 아닌(기타) 시설에 대해 건물번호 기준 필터링 적용
+          const facNo = String(f.facility_no || '');
+          let isDormitory = facNo.includes('501') || facNo.includes('502') || facNo.includes('503') || facNo.includes('504');
+          let isStudentWelfare = facNo.includes('102');
+
+          if (isDormitory) {
+            if (!catGroups['__dormitory__']) catGroups['__dormitory__'] = [];
+            catGroups['__dormitory__'].push(f);
+            return; // 기타 시설 목록에서 제외
+          }
+          
+          if (isStudentWelfare) {
+            if (!catGroups['__student_welfare__']) catGroups['__student_welfare__'] = [];
+            catGroups['__student_welfare__'].push(f);
+            return; // 기타 시설 목록에서 제외
+          }
+
+          // 건물번호 묶음에 포함되지 않은 나머지 시설은 '기타'에 포함
+          if (!catGroups['__etc__']) catGroups['__etc__'] = [];
+          catGroups['__etc__'].push(f);
+        });
+
+        // 렌더링 순서: 주요 카테고리 먼저, 기숙사 시설, 학생복지관, 기타 마지막
+        const renderOrder = [...PRIMARY_CATS, '__dormitory__', '__student_welfare__', '__etc__'];
+
+        let html = '';
+        renderOrder.forEach(key => {
+          if (!catGroups[key] || catGroups[key].length === 0) return;
+          let label = catMap[key] || key;
+          if (key === '__etc__') label = '기타 시설';
+          if (key === '__dormitory__') label = '기숙사 시설';
+          if (key === '__student_welfare__') label = '학생복지관';
+          
+          html += `<div class="fac-cat-section">`;
+          html += `<div class="fac-cat-subtitle">${label}</div>`;
+          html += `<div class="fac-cat-grid">`;
+          catGroups[key].forEach(f => {
+            const href = (f.category === '구내식당')
+              ? `${detailUrl}?id=${f.id}`
+              : `${shopUrl}?id=${f.id}`;
+            const imgStyle = f.image_url
+              ? `background-image:url('${f.image_url}'); background-size:cover; background-position:center;`
+              : `background: var(--hy-color-neutral-100);`;
+            const icon = f.image_url ? '' : `<span class="material-symbols-sharp" style="font-size:32px;color:var(--hy-color-neutral-400);">storefront</span>`;
+            const currentLang = document.documentElement.lang;
+            let shopName = f.name;
+            if (currentLang === 'en' && f.name_en) {
+              shopName = f.name_en;
+            } else if (currentLang === 'zh' && f.name_zh) {
+              shopName = f.name_zh;
+            }
+            
+            let locText = f.location || '';
+            let locHtml = locText ? `<div style="color: var(--hy-color-brand-blue, #003b70); font-size: 0.75rem; font-weight: 600; text-align: center; margin-bottom: 2px;">${locText}</div>` : '';
+
+            html += `
+              <a href="${href}" class="fac-banner-item">
+                <div class="fac-banner-img" style="${imgStyle}">${icon}</div>
+                <div style="padding: 12px 8px; background: #fff;">
+                  ${locHtml}
+                  <div class="fac-banner-name" style="padding: 0;">${shopName}</div>
+                </div>
+              </a>`;
+          });
+          html += `</div></div>`;
+        });
+        facGridContainer.innerHTML = html;
+      } else if (facGridContainer) {
+        facGridContainer.innerHTML = `<div class="hy-empty-state hy-section--no-border">등록된 글이 없습니다.</div>`;
+      }
+
+    });
+  </script>
+</body>
+
+</html>

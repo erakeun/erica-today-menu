@@ -10,7 +10,7 @@ def validate(payload, *, require_today=False, now=None):
     if payload.get("schema_version") != 1 or payload.get("campus") != "ERICA":
         raise ValueError("Unsupported menu schema/campus")
     day = date.fromisoformat(payload["date"])
-    updated = datetime.fromisoformat(payload["generated_at"])
+    updated = datetime.fromisoformat(payload["generated_at"].replace("Z", "+00:00"))
     if updated.tzinfo is None or updated > now + timedelta(minutes=5):
         raise ValueError("Invalid generation time")
     if day > now.astimezone(KST).date():
@@ -53,4 +53,3 @@ def validate(payload, *, require_today=False, now=None):
     if len({s["name"] for s in stores}) != len(stores):
         raise ValueError("Duplicate food court stores")
     return payload
-

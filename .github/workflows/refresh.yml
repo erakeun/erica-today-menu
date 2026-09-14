@@ -1,0 +1,54 @@
+name: 메뉴 자동 갱신
+
+on:
+  workflow_dispatch:
+    inputs:
+      diagnose_direct:
+        description: '원본 직접 접근을 1회 진단(일반 갱신에는 불필요)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      MENU_PROXY_URL: https://asia-northeast3-erica-student-promoters-v4-dev.cloudfunctions.net/ericaMenuRelay
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python tests
+        run: python3 -m unittest discover -s tests
+      - name: Collect and validate today's menu
+        id: menu
+        run: python3 scripts/refresh_menu.py
+      - name: Optional one-shot direct source diagnosis
+        if: inputs.diagnose_direct
+        run: |
+          python3 - <<'PY'
+          from scripts.fetch_menu import fetch_url, FetchError, HY_SQUARE_URL
+          try:
+              fetch_url(HY_SQUARE_URL, 'direct-diagnostic', attempts=1)
+          except FetchError as exc:
+              print(f'Confirmed direct-path failure: {exc}')
+          PY
+      - uses: actions/configure-pages@v5
+        if: steps.menu.outputs.refreshed == 'true'
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.menu.outputs.refreshed == 'true'
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+        if: steps.menu.outputs.refreshed == 'true'
+        id: deployment

@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 배포 데이터 안전성 테스트
-        run: python3 -m unittest discover -s tests -p test_artifact.py
+        run: python3 -m unittest discover -s tests
       - name: 운영 중인 마지막 정상 메뉴 보존
         run: python3 scripts/prepare_pages.py
       - uses: actions/configure-pages@v5
@@ -28,4 +28,3 @@ jobs:
           path: dist
       - uses: actions/deploy-pages@v4
         id: deployment
-

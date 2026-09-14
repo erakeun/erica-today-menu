@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 import tempfile
 import unittest
@@ -91,7 +92,9 @@ class CurrentPortalParserTests(unittest.TestCase):
             with (
                 patch.object(fetch_menu, "fetch", return_value=source) as mocked_fetch,
                 patch.object(fetch_menu, "OUTPUT", output),
+                patch.object(fetch_menu, "datetime") as clock,
             ):
+                clock.now.return_value = datetime(2026, 9, 10, 12, tzinfo=fetch_menu.KST)
                 fetch_menu.main()
 
             payload = json.loads(output.read_text())

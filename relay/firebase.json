@@ -1,0 +1,7 @@
+{
+  "functions": [{
+    "source": "functions",
+    "codebase": "erica-menu-relay",
+    "ignore": ["node_modules", "*.log", "test/**"]
+  }]
+}
