@@ -97,7 +97,7 @@ class CurrentPortalParserTests(unittest.TestCase):
                 clock.now.return_value = datetime(2026, 9, 10, 12, tzinfo=fetch_menu.KST)
                 fetch_menu.main()
 
-            payload = json.loads(output.read_text())
+            payload = json.loads(output.read_text(encoding="utf-8"))
 
         mocked_fetch.assert_called_once_with(fetch_menu.HY_SQUARE_URL)
         self.assertEqual(payload["date"], "2026-09-10")
@@ -120,7 +120,7 @@ class CurrentPortalParserTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "메뉴 날짜"):
                     fetch_menu.main()
 
-            self.assertEqual(output.read_text(), "last good deployment")
+            self.assertEqual(output.read_text(encoding="utf-8"), "last good deployment")
 
 
 if __name__ == "__main__":

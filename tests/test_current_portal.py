@@ -8,7 +8,7 @@ from unittest.mock import patch
 from scripts import fetch_menu as m, refresh_menu
 
 NOW = datetime(2026, 9, 14, 12, tzinfo=m.KST)
-FIXTURE = (Path(__file__).parent / 'fixtures/hy_square_2026-09-14.html').read_text()
+FIXTURE = (Path(__file__).parent / 'fixtures/hy_square_2026-09-14.html').read_text(encoding='utf-8')
 
 
 def source(menus=None, facilities=None):
@@ -104,7 +104,7 @@ class CurrentSourceTests(unittest.TestCase):
                 refresh_menu.run()
 
     def test_ui_stale_and_different_empty_states(self):
-        page = (Path(__file__).parents[1] / 'dist/index.html').read_text()
+        page = (Path(__file__).parents[1] / 'dist/index.html').read_text(encoding='utf-8')
         for text in ['마지막 확인된 메뉴', '지난 메뉴', '마지막 정상 갱신', '오늘 메뉴 미등록', '원본 조회 일시 실패', 'Asia/Seoul']:
             self.assertIn(text, page)
 
