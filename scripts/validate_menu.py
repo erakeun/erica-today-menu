@@ -9,7 +9,7 @@ except ImportError:
 
 
 def main():
-    payload = json.loads((Path(__file__).resolve().parents[1] / "dist/menu.json").read_text())
+    payload = json.loads((Path(__file__).resolve().parents[1] / "dist/menu.json").read_text(encoding="utf-8"))
     validate(payload, require_today=True)
     print(f"배포 검증 성공: date={payload['date']} restaurants={len(payload['restaurants'])}")
 

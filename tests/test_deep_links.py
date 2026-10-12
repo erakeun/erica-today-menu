@@ -5,7 +5,7 @@ import unittest
 class DeepLinkTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.html = (Path(__file__).parents[1] / "dist" / "index.html").read_text()
+        cls.html = (Path(__file__).parents[1] / "dist" / "index.html").read_text(encoding="utf-8")
 
     def test_supported_restaurant_ids_have_buttons(self):
         for restaurant_id in ("student", "dormitory", "incubator", "faculty", "food-court"):
